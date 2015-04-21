@@ -1,0 +1,580 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <script>
+    var graph = function(classname, method, padding) {
+        var g = new dagreD3.graphlib.Graph()
+                .setGraph({})
+                .setDefaultEdgeLabel(function() { return {}; });
+
+        padding = padding || 10;
+
+        g.addBranch = function(branch) {
+            var opLabel = 'OP #' + branch.op_start,
+                lineLabel = 'Line #' + branch.line_start;
+
+            if (branch.op_start != branch.op_end) {
+                opLabel = opLabel + ' - #' + branch.op_end;
+            }
+
+            if (branch.line_start != branch.line_end) {
+                lineLabel = lineLabel + ' - #' + branch.line_end;
+            }
+
+            g.setNode(
+                    branch.op_start,
+                    {
+                        label: opLabel + '\n \n' + lineLabel,
+                        class: branch.hit ? 'covered' : 'uncovered'
+                    }
+            );
+
+            return g;
+        };
+
+        var edges = [];
+        g.addEdge = function(begin, end, hit, label) {
+            var options = {
+                lineInterpolate: 'basis'
+            };
+
+            if (!edges[begin]) {
+                edges[begin] = [];
+            }
+
+            if (!edges[begin][end]) {
+                edges[begin][end] = {};
+                edges[begin][end][true] = 0;
+                edges[begin][end][false] = 0;
+            }
+
+            ++edges[begin][end][!!hit];
+
+            if (label) {
+                options.label = label;
+                options.width = padding / 2;
+            }
+
+            var paths = edges[begin][end][true] + edges[begin][end][false];
+            if (paths > 1) {
+                options.label = ' ' + edges[begin][end][true] + ' / ' + paths;
+            }
+
+            options.labelStyle = 'fill: #' + (edges[begin][end][true] == paths ? '8eff9b' : 'ff8c76');
+            options.class = edges[begin][end][true] == paths ? 'covered' : 'uncovered';
+
+            g.setEdge(begin, end, options);
+
+            return g;
+        };
+
+        g.roundNodes = function() {
+            g.nodes().forEach(function(v) {
+                var node = g.node(v);
+
+                node.rx = node.ry = 5;
+            });
+
+            return g;
+        };
+
+        g.render = function() {
+            var render = new dagreD3.render(),
+                    svg = d3.select('#' + method + ' svg'),
+                    group = svg.append("g");
+
+            render(d3.select('#' + method + ' svg g'), g);
+
+            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
+            svg
+                .attr("height", g.graph().height + (padding * 2))
+                .attr("width", g.graph().width + (padding * 2));
+        };
+
+        return g;
+    };
+    </script>
+
+    <div class="row">
+        <h1 class="pull-left">mageekguy\atoum\asserters\hash: paths coverage</h1>
+        <h2 class="pull-right"><span class="text-success">82%</span></h2
+    </div>
+
+    
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Method</th>
+        <th colspan="4">Coverage</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th>Line</th>
+        <th>Branches</th>
+        <th>Path</th>
+    </tr>
+    </thead>
+
+    <tbody>
+            <tr>
+            <td><a href="#__get">mageekguy\atoum\asserters\hash::__get()</a></td>
+            <td>    
+    <span class="label label-warning">67%</span>
+</td>
+            <td>    
+    <span class="label label-success">73%</span>
+</td>
+            <td>    
+    <span class="label label-success">80%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#isSha1">mageekguy\atoum\asserters\hash::isSha1()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#isSha256">mageekguy\atoum\asserters\hash::isSha256()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#isSha512">mageekguy\atoum\asserters\hash::isSha512()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#isMd5">mageekguy\atoum\asserters\hash::isMd5()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#isHash">mageekguy\atoum\asserters\hash::isHash()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-warning">50%</span>
+</td>
+        </tr>
+        <tr>
+        <th>Total</th>
+        <td>    
+    <span class="label label-success">84%</span>
+</td>
+        <td>    
+    <span class="label label-success">84%</span>
+</td>
+        <td>    
+    <span class="label label-success">82%</span>
+</td>
+    </tr>
+    </tbody>
+</table>
+
+            <div class="panel panel-success" id="__get">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::__get()
+                    
+    <span class="label label-success">80%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#__get" class="btn btn-sm btn-warning"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#__get" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', '__get')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":11,"line_end":15,"hit":1,"out":[11,12],"out_hit":[131072,393216]})
+                                    .addBranch({"op_start":11,"op_end":11,"line_start":16,"line_end":16,"hit":1,"out":[15],"out_hit":[131072]})
+                                    .addBranch({"op_start":12,"op_end":14,"line_start":16,"line_end":16,"hit":1,"out":[15,16],"out_hit":[131072,262144]})
+                                    .addBranch({"op_start":15,"op_end":15,"line_start":17,"line_end":17,"hit":1,"out":[19],"out_hit":[262144]})
+                                    .addBranch({"op_start":16,"op_end":18,"line_start":17,"line_end":17,"hit":1,"out":[19,20],"out_hit":[131072,131072]})
+                                    .addBranch({"op_start":19,"op_end":19,"line_start":18,"line_end":18,"hit":1,"out":[23],"out_hit":[393216]})
+                                    .addBranch({"op_start":20,"op_end":22,"line_start":18,"line_end":18,"hit":1,"out":[23,31],"out_hit":[131072,0]})
+                                    .addBranch({"op_start":23,"op_end":29,"line_start":19,"line_end":19,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":31,"op_end":32,"line_start":21,"line_end":21,"hit":0,"out":[43],"out_hit":[0]})
+                                    .addBranch({"op_start":33,"op_end":41,"line_start":22,"line_end":22,"hit":0,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":43,"op_end":46,"line_start":23,"line_end":24,"hit":0,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 11, 1)
+                                                                    
+                                                    .addEdge(11, 15, 1)
+                                                                    
+                                                    .addEdge(15, 19, 1)
+                                                                    
+                                                    .addEdge(19, 23, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 1)
+                                                                    
+                                                    .addEdge(12, 15, 1)
+                                                                    
+                                                    .addEdge(15, 19, 1)
+                                                                    
+                                                    .addEdge(19, 23, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 1)
+                                                                    
+                                                    .addEdge(12, 16, 1)
+                                                                    
+                                                    .addEdge(16, 19, 1)
+                                                                    
+                                                    .addEdge(19, 23, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 1)
+                                                                    
+                                                    .addEdge(12, 16, 1)
+                                                                    
+                                                    .addEdge(16, 20, 1)
+                                                                    
+                                                    .addEdge(20, 23, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 0)
+                                                                    
+                                                    .addEdge(12, 16, 0)
+                                                                    
+                                                    .addEdge(16, 20, 0)
+                                                                    
+                                                    .addEdge(20, 31, 0)
+                                                                    
+                                                    .addEdge(31, 43, 0)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="isSha1">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::isSha1()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#isSha1" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#isSha1" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', 'isSha1')
+                                    .addBranch({"op_start":0,"op_end":11,"line_start":26,"line_end":29,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="isSha256">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::isSha256()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#isSha256" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#isSha256" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', 'isSha256')
+                                    .addBranch({"op_start":0,"op_end":11,"line_start":31,"line_end":34,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="isSha512">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::isSha512()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#isSha512" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#isSha512" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', 'isSha512')
+                                    .addBranch({"op_start":0,"op_end":11,"line_start":36,"line_end":39,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="isMd5">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::isMd5()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#isMd5" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#isMd5" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', 'isMd5')
+                                    .addBranch({"op_start":0,"op_end":11,"line_start":41,"line_end":44,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-warning" id="isHash">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\hash::isHash()
+                    
+    <span class="label label-warning">50%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-hash.html#isHash" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-hash-branch.html#isHash" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\hash', 'isHash')
+                                    .addBranch({"op_start":0,"op_end":16,"line_start":46,"line_end":49,"hit":1,"out":[17,33],"out_hit":[524288,524288]})
+                                    .addBranch({"op_start":17,"op_end":32,"line_start":50,"line_end":51,"hit":1,"out":[48],"out_hit":[524288]})
+                                    .addBranch({"op_start":33,"op_end":47,"line_start":54,"line_end":57,"hit":1,"out":[48],"out_hit":[0]})
+                                    .addBranch({"op_start":48,"op_end":51,"line_start":57,"line_end":58,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 17, 1)
+                                                                    
+                                                    .addEdge(17, 48, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 33, 0)
+                                                                    
+                                                    .addEdge(33, 48, 0)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+        </div>
+</div>
+
+</body>
+
+</html>

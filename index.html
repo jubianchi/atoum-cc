@@ -1,0 +1,588 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <h1 class="pull-left">Code coverage report</h1>
+    <h2 class="pull-right text-success">94%</h2>
+    <table class="table table-bordered table-stripped">
+        <thead>
+        <tr>
+            <th>Class</th>
+            <th colspan="4">Coverage</th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Line</th>
+            <th>Methods</th>
+            <th>Branches</th>
+            <th>Path</th>
+        </tr>
+        </thead>
+
+        <tbody>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-adapter.html">mageekguy\atoum\asserters\adapter</a></td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-success">80%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-success">79%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-adapter-call.html">mageekguy\atoum\asserters\adapter\call</a></td>
+                <td>    
+    <span class="label label-success">96%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-warning">9%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserter.html">mageekguy\atoum\asserter</a></td>
+                <td>    
+    <span class="label label-success">81%</span>
+</td>
+                <td>    
+    <span class="label label-success">89%</span>
+</td>
+                <td>    
+    <span class="label label-warning">63%</span>
+</td>
+                <td>    
+    <span class="label label-warning">40%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-adapter-call-manager.html">mageekguy\atoum\asserters\adapter\call\manager</a></td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-boolean.html">mageekguy\atoum\asserters\boolean</a></td>
+                <td>    
+    <span class="label label-success">81%</span>
+</td>
+                <td>    
+    <span class="label label-success">75%</span>
+</td>
+                <td>    
+    <span class="label label-success">77%</span>
+</td>
+                <td>    
+    <span class="label label-success">71%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-variable.html">mageekguy\atoum\asserters\variable</a></td>
+                <td>    
+    <span class="label label-success">95%</span>
+</td>
+                <td>    
+    <span class="label label-success">96%</span>
+</td>
+                <td>    
+    <span class="label label-success">94%</span>
+</td>
+                <td>    
+    <span class="label label-warning">67%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-castToString.html">mageekguy\atoum\asserters\castToString</a></td>
+                <td>    
+    <span class="label label-success">92%</span>
+</td>
+                <td>    
+    <span class="label label-warning">50%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-warning">50%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-phpString.html">mageekguy\atoum\asserters\phpString</a></td>
+                <td>    
+    <span class="label label-success">92%</span>
+</td>
+                <td>    
+    <span class="label label-success">75%</span>
+</td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-warning">59%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-constant.html">mageekguy\atoum\asserters\constant</a></td>
+                <td>    
+    <span class="label label-success">88%</span>
+</td>
+                <td>    
+    <span class="label label-success">82%</span>
+</td>
+                <td>    
+    <span class="label label-success">80%</span>
+</td>
+                <td>    
+    <span class="label label-success">79%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-dateInterval.html">mageekguy\atoum\asserters\dateInterval</a></td>
+                <td>    
+    <span class="label label-success">94%</span>
+</td>
+                <td>    
+    <span class="label label-success">85%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-warning">65%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-object.html">mageekguy\atoum\asserters\object</a></td>
+                <td>    
+    <span class="label label-success">94%</span>
+</td>
+                <td>    
+    <span class="label label-success">87%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-warning">58%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-dateTime.html">mageekguy\atoum\asserters\dateTime</a></td>
+                <td>    
+    <span class="label label-success">99%</span>
+</td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-success">98%</span>
+</td>
+                <td>    
+    <span class="label label-warning">57%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-error.html">mageekguy\atoum\asserters\error</a></td>
+                <td>    
+    <span class="label label-success">97%</span>
+</td>
+                <td>    
+    <span class="label label-success">94%</span>
+</td>
+                <td>    
+    <span class="label label-success">97%</span>
+</td>
+                <td>    
+    <span class="label label-warning">43%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-exception.html">mageekguy\atoum\asserters\exception</a></td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-success">73%</span>
+</td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-warning">35%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-extension.html">mageekguy\atoum\asserters\extension</a></td>
+                <td>    
+    <span class="label label-success">84%</span>
+</td>
+                <td>    
+    <span class="label label-success">80%</span>
+</td>
+                <td>    
+    <span class="label label-success">84%</span>
+</td>
+                <td>    
+    <span class="label label-success">85%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-hash.html">mageekguy\atoum\asserters\hash</a></td>
+                <td>    
+    <span class="label label-success">84%</span>
+</td>
+                <td>    
+    <span class="label label-success">83%</span>
+</td>
+                <td>    
+    <span class="label label-success">84%</span>
+</td>
+                <td>    
+    <span class="label label-success">82%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-integer.html">mageekguy\atoum\asserters\integer</a></td>
+                <td>    
+    <span class="label label-success">92%</span>
+</td>
+                <td>    
+    <span class="label label-success">86%</span>
+</td>
+                <td>    
+    <span class="label label-success">88%</span>
+</td>
+                <td>    
+    <span class="label label-warning">54%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-mock.html">mageekguy\atoum\asserters\mock</a></td>
+                <td>    
+    <span class="label label-success">96%</span>
+</td>
+                <td>    
+    <span class="label label-success">83%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">73%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-mysqlDateTime.html">mageekguy\atoum\asserters\mysqlDateTime</a></td>
+                <td>    
+    <span class="label label-success">92%</span>
+</td>
+                <td>    
+    <span class="label label-warning">50%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">80%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-output.html">mageekguy\atoum\asserters\output</a></td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-warning">50%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-phpArray.html">mageekguy\atoum\asserters\phpArray</a></td>
+                <td>    
+    <span class="label label-success">98%</span>
+</td>
+                <td>    
+    <span class="label label-success">91%</span>
+</td>
+                <td>    
+    <span class="label label-success">97%</span>
+</td>
+                <td>    
+    <span class="label label-warning">38%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-phpClass.html">mageekguy\atoum\asserters\phpClass</a></td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-success">81%</span>
+</td>
+                <td>    
+    <span class="label label-success">92%</span>
+</td>
+                <td>    
+    <span class="label label-warning">69%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-phpFloat.html">mageekguy\atoum\asserters\phpFloat</a></td>
+                <td>    
+    <span class="label label-success">88%</span>
+</td>
+                <td>    
+    <span class="label label-warning">67%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-warning">14%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-phpFunction.html">mageekguy\atoum\asserters\phpFunction</a></td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-success">90%</span>
+</td>
+                <td>    
+    <span class="label label-success">93%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-sizeOf.html">mageekguy\atoum\asserters\sizeOf</a></td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-stream.html">mageekguy\atoum\asserters\stream</a></td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">78%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-testedClass.html">mageekguy\atoum\asserters\testedClass</a></td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+            </tr>
+                    <tr>
+                <td><a href="./mageekguy-atoum-asserters-utf8String.html">mageekguy\atoum\asserters\utf8String</a></td>
+                <td>    
+    <span class="label label-success">96%</span>
+</td>
+                <td>    
+    <span class="label label-success">77%</span>
+</td>
+                <td>    
+    <span class="label label-success">100%</span>
+</td>
+                <td>    
+    <span class="label label-warning">54%</span>
+</td>
+            </tr>
+                </tbody>
+    </table>
+    </div>
+</div>
+
+</body>
+
+</html>

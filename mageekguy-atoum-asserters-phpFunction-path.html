@@ -1,0 +1,709 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <script>
+    var graph = function(classname, method, padding) {
+        var g = new dagreD3.graphlib.Graph()
+                .setGraph({})
+                .setDefaultEdgeLabel(function() { return {}; });
+
+        padding = padding || 10;
+
+        g.addBranch = function(branch) {
+            var opLabel = 'OP #' + branch.op_start,
+                lineLabel = 'Line #' + branch.line_start;
+
+            if (branch.op_start != branch.op_end) {
+                opLabel = opLabel + ' - #' + branch.op_end;
+            }
+
+            if (branch.line_start != branch.line_end) {
+                lineLabel = lineLabel + ' - #' + branch.line_end;
+            }
+
+            g.setNode(
+                    branch.op_start,
+                    {
+                        label: opLabel + '\n \n' + lineLabel,
+                        class: branch.hit ? 'covered' : 'uncovered'
+                    }
+            );
+
+            return g;
+        };
+
+        var edges = [];
+        g.addEdge = function(begin, end, hit, label) {
+            var options = {
+                lineInterpolate: 'basis'
+            };
+
+            if (!edges[begin]) {
+                edges[begin] = [];
+            }
+
+            if (!edges[begin][end]) {
+                edges[begin][end] = {};
+                edges[begin][end][true] = 0;
+                edges[begin][end][false] = 0;
+            }
+
+            ++edges[begin][end][!!hit];
+
+            if (label) {
+                options.label = label;
+                options.width = padding / 2;
+            }
+
+            var paths = edges[begin][end][true] + edges[begin][end][false];
+            if (paths > 1) {
+                options.label = ' ' + edges[begin][end][true] + ' / ' + paths;
+            }
+
+            options.labelStyle = 'fill: #' + (edges[begin][end][true] == paths ? '8eff9b' : 'ff8c76');
+            options.class = edges[begin][end][true] == paths ? 'covered' : 'uncovered';
+
+            g.setEdge(begin, end, options);
+
+            return g;
+        };
+
+        g.roundNodes = function() {
+            g.nodes().forEach(function(v) {
+                var node = g.node(v);
+
+                node.rx = node.ry = 5;
+            });
+
+            return g;
+        };
+
+        g.render = function() {
+            var render = new dagreD3.render(),
+                    svg = d3.select('#' + method + ' svg'),
+                    group = svg.append("g");
+
+            render(d3.select('#' + method + ' svg g'), g);
+
+            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
+            svg
+                .attr("height", g.graph().height + (padding * 2))
+                .attr("width", g.graph().width + (padding * 2));
+        };
+
+        return g;
+    };
+    </script>
+
+    <div class="row">
+        <h1 class="pull-left">mageekguy\atoum\asserters\phpFunction: paths coverage</h1>
+        <h2 class="pull-right"><span class="text-success">93%</span></h2
+    </div>
+
+    
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Method</th>
+        <th colspan="4">Coverage</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th>Line</th>
+        <th>Branches</th>
+        <th>Path</th>
+    </tr>
+    </thead>
+
+    <tbody>
+            <tr>
+            <td><a href="#setWithTest">mageekguy\atoum\asserters\phpFunction::setWithTest()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#setWith">mageekguy\atoum\asserters\phpFunction::setWith()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalled">mageekguy\atoum\asserters\phpFunction::wasCalled()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalledWithArguments">mageekguy\atoum\asserters\phpFunction::wasCalledWithArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalledWithIdenticalArguments">mageekguy\atoum\asserters\phpFunction::wasCalledWithIdenticalArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalledWithAnyArguments">mageekguy\atoum\asserters\phpFunction::wasCalledWithAnyArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalledWithoutAnyArgument">mageekguy\atoum\asserters\phpFunction::wasCalledWithoutAnyArgument()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#setFunction">mageekguy\atoum\asserters\phpFunction::setFunction()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#adapterIsSet">mageekguy\atoum\asserters\phpFunction::adapterIsSet()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#callIsSet">mageekguy\atoum\asserters\phpFunction::callIsSet()</a></td>
+            <td>    
+    <span class="label label-warning">33%</span>
+</td>
+            <td>    
+    <span class="label label-warning">33%</span>
+</td>
+            <td>    
+    <span class="label label-warning">50%</span>
+</td>
+        </tr>
+        <tr>
+        <th>Total</th>
+        <td>    
+    <span class="label label-success">93%</span>
+</td>
+        <td>    
+    <span class="label label-success">90%</span>
+</td>
+        <td>    
+    <span class="label label-success">93%</span>
+</td>
+    </tr>
+    </tbody>
+</table>
+
+            <div class="panel panel-success" id="setWithTest">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::setWithTest()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#setWithTest" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#setWithTest" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'setWithTest')
+                                    .addBranch({"op_start":0,"op_end":19,"line_start":15,"line_end":22,"hit":1,"out":[20,27],"out_hit":[384,128]})
+                                    .addBranch({"op_start":20,"op_end":26,"line_start":23,"line_end":24,"hit":1,"out":[27],"out_hit":[384]})
+                                    .addBranch({"op_start":27,"op_end":30,"line_start":26,"line_end":27,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 20, 1)
+                                                                    
+                                                    .addEdge(20, 27, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 27, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="setWith">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::setWith()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'setWith')
+                                    .addBranch({"op_start":0,"op_end":21,"line_start":29,"line_end":32,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalled">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::wasCalled()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#wasCalled" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#wasCalled" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'wasCalled')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":34,"line_end":37,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalledWithArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::wasCalledWithArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#wasCalledWithArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#wasCalledWithArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'wasCalledWithArguments')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":39,"line_end":42,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalledWithIdenticalArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::wasCalledWithIdenticalArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#wasCalledWithIdenticalArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#wasCalledWithIdenticalArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'wasCalledWithIdenticalArguments')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":44,"line_end":47,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalledWithAnyArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::wasCalledWithAnyArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#wasCalledWithAnyArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#wasCalledWithAnyArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'wasCalledWithAnyArguments')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":49,"line_end":52,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalledWithoutAnyArgument">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::wasCalledWithoutAnyArgument()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#wasCalledWithoutAnyArgument" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#wasCalledWithoutAnyArgument" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'wasCalledWithoutAnyArgument')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":54,"line_end":57,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="setFunction">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::setFunction()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#setFunction" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#setFunction" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'setFunction')
+                                    .addBranch({"op_start":0,"op_end":6,"line_start":59,"line_end":62,"hit":1,"out":[7,39],"out_hit":[384,768]})
+                                    .addBranch({"op_start":7,"op_end":18,"line_start":63,"line_end":66,"hit":1,"out":[19,29],"out_hit":[256,384]})
+                                    .addBranch({"op_start":19,"op_end":28,"line_start":67,"line_end":68,"hit":1,"out":[29],"out_hit":[256]})
+                                    .addBranch({"op_start":29,"op_end":38,"line_start":70,"line_end":71,"hit":1,"out":[39],"out_hit":[384]})
+                                    .addBranch({"op_start":39,"op_end":48,"line_start":73,"line_end":74,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 7, 1)
+                                                                    
+                                                    .addEdge(7, 19, 1)
+                                                                    
+                                                    .addEdge(19, 29, 1)
+                                                                    
+                                                    .addEdge(29, 39, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 7, 1)
+                                                                    
+                                                    .addEdge(7, 29, 1)
+                                                                    
+                                                    .addEdge(29, 39, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 39, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="adapterIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::adapterIsSet()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'adapterIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":76,"line_end":80,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":82,"line_end":82,"hit":1,"out":[11,2147483645],"out_hit":[640,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":84,"line_end":86,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                                                        
+                                                    .addEdge(10, 11, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-warning" id="callIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\phpFunction::callIsSet()
+                    
+    <span class="label label-warning">50%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-phpFunction.html#callIsSet" class="btn btn-sm btn-warning"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-phpFunction-branch.html#callIsSet" class="btn btn-sm btn-warning"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\phpFunction', 'callIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":88,"line_end":92,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":94,"line_end":94,"hit":0,"out":[11,2147483645],"out_hit":[0,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":96,"line_end":98,"hit":0,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                                                        
+                                                    .addEdge(10, 11, 0)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+        </div>
+</div>
+
+</body>
+
+</html>

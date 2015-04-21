@@ -1,0 +1,700 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <script>
+    var graph = function(classname, method, padding) {
+        var g = new dagreD3.graphlib.Graph()
+                .setGraph({})
+                .setDefaultEdgeLabel(function() { return {}; });
+
+        padding = padding || 10;
+
+        g.addBranch = function(branch) {
+            var opLabel = 'OP #' + branch.op_start,
+                lineLabel = 'Line #' + branch.line_start;
+
+            if (branch.op_start != branch.op_end) {
+                opLabel = opLabel + ' - #' + branch.op_end;
+            }
+
+            if (branch.line_start != branch.line_end) {
+                lineLabel = lineLabel + ' - #' + branch.line_end;
+            }
+
+            g.setNode(
+                    branch.op_start,
+                    {
+                        label: opLabel + '\n \n' + lineLabel,
+                        class: branch.hit ? 'covered' : 'uncovered'
+                    }
+            );
+
+            return g;
+        };
+
+        var edges = [];
+        g.addEdge = function(begin, end, hit, label) {
+            var options = {
+                lineInterpolate: 'basis'
+            };
+
+            if (!edges[begin]) {
+                edges[begin] = [];
+            }
+
+            if (!edges[begin][end]) {
+                edges[begin][end] = {};
+                edges[begin][end][true] = 0;
+                edges[begin][end][false] = 0;
+            }
+
+            ++edges[begin][end][!!hit];
+
+            if (label) {
+                options.label = label;
+                options.width = padding / 2;
+            }
+
+            var paths = edges[begin][end][true] + edges[begin][end][false];
+            if (paths > 1) {
+                options.label = ' ' + edges[begin][end][true] + ' / ' + paths;
+            }
+
+            options.labelStyle = 'fill: #' + (edges[begin][end][true] == paths ? '8eff9b' : 'ff8c76');
+            options.class = edges[begin][end][true] == paths ? 'covered' : 'uncovered';
+
+            g.setEdge(begin, end, options);
+
+            return g;
+        };
+
+        g.roundNodes = function() {
+            g.nodes().forEach(function(v) {
+                var node = g.node(v);
+
+                node.rx = node.ry = 5;
+            });
+
+            return g;
+        };
+
+        g.render = function() {
+            var render = new dagreD3.render(),
+                    svg = d3.select('#' + method + ' svg'),
+                    group = svg.append("g");
+
+            render(d3.select('#' + method + ' svg g'), g);
+
+            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
+            svg
+                .attr("height", g.graph().height + (padding * 2))
+                .attr("width", g.graph().width + (padding * 2));
+        };
+
+        return g;
+    };
+    </script>
+
+    <div class="row">
+        <h1 class="pull-left">mageekguy\atoum\asserters\adapter: paths coverage</h1>
+        <h2 class="pull-right"><span class="text-success">79%</span></h2
+    </div>
+
+    
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Method</th>
+        <th colspan="4">Coverage</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th>Line</th>
+        <th>Branches</th>
+        <th>Path</th>
+    </tr>
+    </thead>
+
+    <tbody>
+            <tr>
+            <td><a href="#__get">mageekguy\atoum\asserters\adapter::__get()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-warning">67%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#call">mageekguy\atoum\asserters\adapter::call()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withArguments">mageekguy\atoum\asserters\adapter::withArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withIdenticalArguments">mageekguy\atoum\asserters\adapter::withIdenticalArguments()</a></td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withAtLeastArguments">mageekguy\atoum\asserters\adapter::withAtLeastArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withAtLeastIdenticalArguments">mageekguy\atoum\asserters\adapter::withAtLeastIdenticalArguments()</a></td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+            <td>    
+    <span class="label label-danger">0%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withAnyArguments">mageekguy\atoum\asserters\adapter::withAnyArguments()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#withoutAnyArgument">mageekguy\atoum\asserters\adapter::withoutAnyArgument()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#adapterIsSet">mageekguy\atoum\asserters\adapter::adapterIsSet()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#callIsSet">mageekguy\atoum\asserters\adapter::callIsSet()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+        <tr>
+        <th>Total</th>
+        <td>    
+    <span class="label label-success">90%</span>
+</td>
+        <td>    
+    <span class="label label-success">90%</span>
+</td>
+        <td>    
+    <span class="label label-success">79%</span>
+</td>
+    </tr>
+    </tbody>
+</table>
+
+            <div class="panel panel-warning" id="__get">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::__get()
+                    
+    <span class="label label-warning">67%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#__get" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#__get" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', '__get')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":16,"line_end":20,"hit":1,"out":[11,12],"out_hit":[32768,15032877056]})
+                                    .addBranch({"op_start":11,"op_end":11,"line_start":21,"line_end":21,"hit":1,"out":[15],"out_hit":[32768]})
+                                    .addBranch({"op_start":12,"op_end":14,"line_start":21,"line_end":21,"hit":1,"out":[15,23],"out_hit":[32768,15032877056]})
+                                    .addBranch({"op_start":15,"op_end":21,"line_start":22,"line_end":22,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":23,"op_end":24,"line_start":24,"line_end":24,"hit":1,"out":[35],"out_hit":[15032877056]})
+                                    .addBranch({"op_start":25,"op_end":33,"line_start":25,"line_end":25,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":35,"op_end":38,"line_start":26,"line_end":27,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 11, 1)
+                                                                    
+                                                    .addEdge(11, 15, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 1)
+                                                                    
+                                                    .addEdge(12, 15, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 12, 0)
+                                                                    
+                                                    .addEdge(12, 23, 0)
+                                                                    
+                                                    .addEdge(23, 35, 0)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="call">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::call()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#call" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#call" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'call')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":29,"line_end":32,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="withArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withArguments')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":34,"line_end":37,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-danger" id="withIdenticalArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withIdenticalArguments()
+                    
+    <span class="label label-danger">0%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withIdenticalArguments" class="btn btn-sm btn-danger"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withIdenticalArguments" class="btn btn-sm btn-danger"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withIdenticalArguments')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":39,"line_end":42,"hit":0,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="withAtLeastArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withAtLeastArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withAtLeastArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withAtLeastArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withAtLeastArguments')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":44,"line_end":47,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-danger" id="withAtLeastIdenticalArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withAtLeastIdenticalArguments()
+                    
+    <span class="label label-danger">0%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withAtLeastIdenticalArguments" class="btn btn-sm btn-danger"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withAtLeastIdenticalArguments" class="btn btn-sm btn-danger"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withAtLeastIdenticalArguments')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":49,"line_end":52,"hit":0,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="withAnyArguments">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withAnyArguments()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withAnyArguments" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withAnyArguments" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withAnyArguments')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":54,"line_end":57,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="withoutAnyArgument">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::withoutAnyArgument()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#withoutAnyArgument" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#withoutAnyArgument" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'withoutAnyArgument')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":59,"line_end":62,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="adapterIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::adapterIsSet()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'adapterIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":64,"line_end":68,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":70,"line_end":70,"hit":1,"out":[11,2147483645],"out_hit":[21474836480,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":72,"line_end":74,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                                                        
+                                                    .addEdge(10, 11, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="callIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter::callIsSet()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter.html#callIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-branch.html#callIsSet" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter', 'callIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":76,"line_end":80,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":82,"line_end":82,"hit":1,"out":[11,2147483645],"out_hit":[19327352832,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":84,"line_end":86,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                                                        
+                                                    .addEdge(10, 11, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+        </div>
+</div>
+
+</body>
+
+</html>

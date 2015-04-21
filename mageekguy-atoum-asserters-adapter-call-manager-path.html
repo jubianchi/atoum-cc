@@ -1,0 +1,441 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <script>
+    var graph = function(classname, method, padding) {
+        var g = new dagreD3.graphlib.Graph()
+                .setGraph({})
+                .setDefaultEdgeLabel(function() { return {}; });
+
+        padding = padding || 10;
+
+        g.addBranch = function(branch) {
+            var opLabel = 'OP #' + branch.op_start,
+                lineLabel = 'Line #' + branch.line_start;
+
+            if (branch.op_start != branch.op_end) {
+                opLabel = opLabel + ' - #' + branch.op_end;
+            }
+
+            if (branch.line_start != branch.line_end) {
+                lineLabel = lineLabel + ' - #' + branch.line_end;
+            }
+
+            g.setNode(
+                    branch.op_start,
+                    {
+                        label: opLabel + '\n \n' + lineLabel,
+                        class: branch.hit ? 'covered' : 'uncovered'
+                    }
+            );
+
+            return g;
+        };
+
+        var edges = [];
+        g.addEdge = function(begin, end, hit, label) {
+            var options = {
+                lineInterpolate: 'basis'
+            };
+
+            if (!edges[begin]) {
+                edges[begin] = [];
+            }
+
+            if (!edges[begin][end]) {
+                edges[begin][end] = {};
+                edges[begin][end][true] = 0;
+                edges[begin][end][false] = 0;
+            }
+
+            ++edges[begin][end][!!hit];
+
+            if (label) {
+                options.label = label;
+                options.width = padding / 2;
+            }
+
+            var paths = edges[begin][end][true] + edges[begin][end][false];
+            if (paths > 1) {
+                options.label = ' ' + edges[begin][end][true] + ' / ' + paths;
+            }
+
+            options.labelStyle = 'fill: #' + (edges[begin][end][true] == paths ? '8eff9b' : 'ff8c76');
+            options.class = edges[begin][end][true] == paths ? 'covered' : 'uncovered';
+
+            g.setEdge(begin, end, options);
+
+            return g;
+        };
+
+        g.roundNodes = function() {
+            g.nodes().forEach(function(v) {
+                var node = g.node(v);
+
+                node.rx = node.ry = 5;
+            });
+
+            return g;
+        };
+
+        g.render = function() {
+            var render = new dagreD3.render(),
+                    svg = d3.select('#' + method + ' svg'),
+                    group = svg.append("g");
+
+            render(d3.select('#' + method + ' svg g'), g);
+
+            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
+            svg
+                .attr("height", g.graph().height + (padding * 2))
+                .attr("width", g.graph().width + (padding * 2));
+        };
+
+        return g;
+    };
+    </script>
+
+    <div class="row">
+        <h1 class="pull-left">mageekguy\atoum\asserters\adapter\call\manager: paths coverage</h1>
+        <h2 class="pull-right"><span class="text-success">100%</span></h2
+    </div>
+
+    
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Method</th>
+        <th colspan="4">Coverage</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th>Line</th>
+        <th>Branches</th>
+        <th>Path</th>
+    </tr>
+    </thead>
+
+    <tbody>
+            <tr>
+            <td><a href="#__construct">mageekguy\atoum\asserters\adapter\call\manager::__construct()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#add">mageekguy\atoum\asserters\adapter\call\manager::add()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#remove">mageekguy\atoum\asserters\adapter\call\manager::remove()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#check">mageekguy\atoum\asserters\adapter\call\manager::check()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+        <tr>
+        <th>Total</th>
+        <td>    
+    <span class="label label-success">100%</span>
+</td>
+        <td>    
+    <span class="label label-success">100%</span>
+</td>
+        <td>    
+    <span class="label label-success">100%</span>
+</td>
+    </tr>
+    </tbody>
+</table>
+
+            <div class="panel panel-success" id="__construct">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter\call\manager::__construct()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager.html#__construct" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager-branch.html#__construct" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter\\call\\manager', '__construct')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":13,"line_end":16,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="add">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter\call\manager::add()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager.html#add" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager-branch.html#add" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter\\call\\manager', 'add')
+                                    .addBranch({"op_start":0,"op_end":12,"line_start":18,"line_end":23,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="remove">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter\call\manager::remove()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager.html#remove" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager-branch.html#remove" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter\\call\\manager', 'remove')
+                                    .addBranch({"op_start":0,"op_end":12,"line_start":25,"line_end":30,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="check">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\adapter\call\manager::check()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager.html#check" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-adapter-call-manager-branch.html#check" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\adapter\\call\\manager', 'check')
+                                    .addBranch({"op_start":0,"op_end":9,"line_start":32,"line_end":35,"hit":1,"out":[10,50],"out_hit":[268435456,1073741824]})
+                                    .addBranch({"op_start":10,"op_end":48,"line_start":36,"line_end":40,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":50,"op_end":53,"line_start":43,"line_end":44,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                            
+                                                    .addEdge(0, 10, 1)
+                                                                    
+                                                                                                        
+                                                    .addEdge(0, 50, 1)
+                                                                    
+                                                                            .render()
+            ;
+        </script>
+        </div>
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,511 @@
+<html>
+
+<head>
+    <script src="assets/d3.js" charset="utf-8"></script>
+<script src="assets/dagre-d3.js"></script>
+
+<link rel="stylesheet" href="assets/bootstrap.min.css">
+<link rel="stylesheet" href="assets/font-awesome.min.css">
+
+<style>
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    td.branch, td.path {
+        max-width: 2px!important;
+        width: 2px!important;
+        padding: 0!important;
+        border: none!important;
+        border-right: 1px solid #ddd!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    pre {
+        border: none;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    pre .label, .panel-heading .label {
+        margin: 0 10px;
+    }
+
+    pre .label {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 13px;
+    }
+
+    .covered {
+        background-color: #8eff9b;
+    }
+
+    .uncovered {
+        background-color: #ff8c76;
+    }
+
+    .graph {
+        display: block;
+        overflow: auto;
+    }
+
+    div, text {
+        font-weight: 300;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+        font-size: 14px;
+    }
+
+    .node rect {
+        stroke: #999;
+        fill: #fff;
+        stroke-width: 1.5px;
+    }
+
+    .edgePath path {
+        stroke-width: 1.5px;
+    }
+
+    .covered path, .covered rect {
+        stroke: #8eff9b;
+    }
+
+    .uncovered path, .uncovered rect {
+        stroke: #ff8c76;
+    }
+
+    .covered path {
+        fill: #8eff9b;
+    }
+
+    .uncovered path {
+        fill: #ff8c76;
+    }
+
+    td, th {
+        vertical-align: middle!important;
+    }
+
+    tr.line td, tr.line th {
+        padding: 4px!important;
+        line-height: 1!important;
+    }
+
+    th {
+        text-align: center!important;
+    }
+
+    .navbar-right {
+        width: 50%;
+    }
+
+    .navbar-form .form-group, .navbar-form .form-control {
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Code coverage report</a>
+        </div>
+
+        <div class="collapse navbar-collapse">
+            <form class="navbar-form navbar-right">
+                <div class="form-group">
+                    <input type="text" class="form-control" placeholder="Search class">
+                </div>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="col-lg-12">
+            <script>
+    var graph = function(classname, method, padding) {
+        var g = new dagreD3.graphlib.Graph({ multigraph: true })
+                .setGraph({})
+                .setDefaultEdgeLabel(function() { return {}; });
+
+        padding = padding || 40;
+
+        g.addBranch = function(branch) {
+            var opLabel = 'OP #' + branch.op_start,
+                lineLabel = 'Line #' + branch.line_start;
+
+            if (branch.op_start != branch.op_end) {
+                opLabel = opLabel + ' - #' + branch.op_end;
+            }
+
+            if (branch.line_start != branch.line_end) {
+                lineLabel = lineLabel + ' - #' + branch.line_end;
+            }
+
+            g.setNode(
+                    branch.op_start,
+                    {
+                        label: opLabel + '\n \n' + lineLabel,
+                        class: branch.hit ? 'covered' : 'uncovered'
+                    }
+            );
+
+            return g;
+        };
+
+        var edges = 0;
+        g.addEdge = function(begin, end, hit, label) {
+            var options = {
+                class: hit ? 'covered' : 'uncovered',
+                lineInterpolate: 'basis',
+                label: label,
+                labelStyle: 'color: #' + (hit ? '8eff9b' : 'ff8c76'),
+                width: padding / 2
+            };
+
+            g.setEdge(begin, end, options, 'edge-' + edges++);
+
+            return g;
+        };
+
+        g.roundNodes = function() {
+            g.nodes().forEach(function(v) {
+                var node = g.node(v);
+
+                node.rx = node.ry = 5;
+            });
+
+            return g;
+        };
+
+        g.render = function() {
+            var render = new dagreD3.render(),
+                    svg = d3.select('#' + method + ' svg'),
+                    group = svg.append("g");
+
+            render(d3.select('#' + method + ' svg g'), g);
+
+            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
+            svg.attr("height", g.graph().height + (padding * 2));
+            svg.attr("width", g.graph().width + (padding * 2));
+        };
+
+        return g;
+    };
+    </script>
+
+    <div class="row">
+        <h1 class="pull-left">mageekguy\atoum\asserters\mock: branches coverage</h1>
+        <h2 class="pull-right"><span class="text-success">100%</span></h2
+    </div>
+
+    
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Method</th>
+        <th colspan="4">Coverage</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th>Line</th>
+        <th>Branches</th>
+        <th>Path</th>
+    </tr>
+    </thead>
+
+    <tbody>
+            <tr>
+            <td><a href="#setWith">mageekguy\atoum\asserters\mock::setWith()</a></td>
+            <td>    
+    <span class="label label-success">86%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-warning">50%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#receive">mageekguy\atoum\asserters\mock::receive()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasCalled">mageekguy\atoum\asserters\mock::wasCalled()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-warning">50%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#wasNotCalled">mageekguy\atoum\asserters\mock::wasNotCalled()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-warning">50%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#adapterIsSet">mageekguy\atoum\asserters\mock::adapterIsSet()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+            <tr>
+            <td><a href="#callIsSet">mageekguy\atoum\asserters\mock::callIsSet()</a></td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+            <td>    
+    <span class="label label-success">100%</span>
+</td>
+        </tr>
+        <tr>
+        <th>Total</th>
+        <td>    
+    <span class="label label-success">96%</span>
+</td>
+        <td>    
+    <span class="label label-success">100%</span>
+</td>
+        <td>    
+    <span class="label label-success">73%</span>
+</td>
+    </tr>
+    </tbody>
+</table>
+
+            <div class="panel panel-success" id="setWith">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::setWith()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#setWith" class="btn btn-sm btn-warning"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'setWith')
+                                    .addBranch({"op_start":0,"op_end":7,"line_start":14,"line_end":17,"hit":1,"out":[8,26],"out_hit":[32768,524288]})
+                                    .addBranch({"op_start":8,"op_end":25,"line_start":18,"line_end":19,"hit":1,"out":[55],"out_hit":[0]})
+                                    .addBranch({"op_start":26,"op_end":54,"line_start":22,"line_end":27,"hit":1,"out":[55],"out_hit":[524288]})
+                                    .addBranch({"op_start":55,"op_end":58,"line_start":27,"line_end":28,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                                        .addEdge(0, 8, 32768)
+                                                                                                .addEdge(0, 26, 524288)
+                                                                                                                                    .addEdge(8, 55, 0)
+                                                                                                                                    .addEdge(26, 55, 524288)
+                                                                                                                .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="receive">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::receive()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#receive" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#receive" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'receive')
+                                    .addBranch({"op_start":0,"op_end":10,"line_start":30,"line_end":33,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                    .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasCalled">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::wasCalled()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#wasCalled" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#wasCalled" class="btn btn-sm btn-warning"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'wasCalled')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":35,"line_end":38,"hit":1,"out":[14,20],"out_hit":[32768,32768]})
+                                    .addBranch({"op_start":14,"op_end":19,"line_start":39,"line_end":40,"hit":1,"out":[39],"out_hit":[32768]})
+                                    .addBranch({"op_start":20,"op_end":38,"line_start":43,"line_end":46,"hit":1,"out":[39],"out_hit":[0]})
+                                    .addBranch({"op_start":39,"op_end":42,"line_start":46,"line_end":47,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                                        .addEdge(0, 14, 32768)
+                                                                                                .addEdge(0, 20, 32768)
+                                                                                                                                    .addEdge(14, 39, 32768)
+                                                                                                                                    .addEdge(20, 39, 0)
+                                                                                                                .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="wasNotCalled">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::wasNotCalled()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#wasNotCalled" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#wasNotCalled" class="btn btn-sm btn-warning"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'wasNotCalled')
+                                    .addBranch({"op_start":0,"op_end":13,"line_start":49,"line_end":52,"hit":1,"out":[14,20],"out_hit":[32768,32768]})
+                                    .addBranch({"op_start":14,"op_end":19,"line_start":53,"line_end":54,"hit":1,"out":[39],"out_hit":[32768]})
+                                    .addBranch({"op_start":20,"op_end":38,"line_start":57,"line_end":60,"hit":1,"out":[39],"out_hit":[0]})
+                                    .addBranch({"op_start":39,"op_end":42,"line_start":60,"line_end":61,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                                        .addEdge(0, 14, 32768)
+                                                                                                .addEdge(0, 20, 32768)
+                                                                                                                                    .addEdge(14, 39, 32768)
+                                                                                                                                    .addEdge(20, 39, 0)
+                                                                                                                .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="adapterIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::adapterIsSet()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#adapterIsSet" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'adapterIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":63,"line_end":67,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":69,"line_end":69,"hit":1,"out":[11,2147483645],"out_hit":[458752,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":71,"line_end":73,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                                                                                                                        .addEdge(10, 11, 458752)
+                                                                                                                                                            .render()
+            ;
+        </script>
+            <div class="panel panel-success" id="callIsSet">
+            <div class="panel-heading">
+                mageekguy\atoum\asserters\mock::callIsSet()
+                    
+    <span class="label label-success">100%</span>
+
+                    <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-mock.html#callIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+        
+        
+                                <a href="./mageekguy-atoum-asserters-mock-path.html#callIsSet" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+            </div>
+
+            </div>
+            <div class="panel-body">
+                <div class="graph"><svg></svg></div>
+            </div>
+        </div>
+
+        <script>
+            graph('mageekguy\\atoum\\asserters\\mock', 'callIsSet')
+                                    .addBranch({"op_start":0,"op_end":8,"line_start":75,"line_end":79,"hit":1,"out":[2147483645],"out_hit":[0]})
+                                    .addBranch({"op_start":10,"op_end":10,"line_start":81,"line_end":81,"hit":1,"out":[11,2147483645],"out_hit":[327680,0]})
+                                    .addBranch({"op_start":11,"op_end":20,"line_start":83,"line_end":85,"hit":1,"out":[],"out_hit":[]})
+                                .roundNodes()
+                                                                                                                                                                        .addEdge(10, 11, 327680)
+                                                                                                                                                            .render()
+            ;
+        </script>
+        </div>
+</div>
+
+</body>
+
+</html>
