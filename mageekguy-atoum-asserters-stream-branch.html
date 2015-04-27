@@ -2,116 +2,14 @@
 
 <head>
     <script src="assets/d3.js" charset="utf-8"></script>
-<script src="assets/dagre-d3.js"></script>
+    <script src="assets/dagre-d3.js"></script>
+    <script src="assets/jquery.js"></script>
+    <script src="assets/jquery.tablesorter.js"></script>
+    <script src="assets/report.js"></script>
 
-<link rel="stylesheet" href="assets/bootstrap.min.css">
-<link rel="stylesheet" href="assets/font-awesome.min.css">
-
-<style>
-    td, th {
-        vertical-align: middle!important;
-    }
-
-    td.branch, td.path {
-        max-width: 2px!important;
-        width: 2px!important;
-        padding: 0!important;
-        border: none!important;
-        border-right: 1px solid #ddd!important;
-    }
-
-    tr.line td, tr.line th {
-        padding: 4px!important;
-        line-height: 1!important;
-    }
-
-    th {
-        text-align: center!important;
-    }
-
-    pre {
-        border: none;
-        background-color: transparent;
-        padding: 0;
-        margin: 0;
-    }
-
-    pre .label, .panel-heading .label {
-        margin: 0 10px;
-    }
-
-    pre .label {
-        font-weight: 300;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-        font-size: 13px;
-    }
-
-    .covered {
-        background-color: #8eff9b;
-    }
-
-    .uncovered {
-        background-color: #ff8c76;
-    }
-
-    .graph {
-        display: block;
-        overflow: auto;
-    }
-
-    div, text {
-        font-weight: 300;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-        font-size: 14px;
-    }
-
-    .node rect {
-        stroke: #999;
-        fill: #fff;
-        stroke-width: 1.5px;
-    }
-
-    .edgePath path {
-        stroke-width: 1.5px;
-    }
-
-    .covered path, .covered rect {
-        stroke: #8eff9b;
-    }
-
-    .uncovered path, .uncovered rect {
-        stroke: #ff8c76;
-    }
-
-    .covered path {
-        fill: #8eff9b;
-    }
-
-    .uncovered path {
-        fill: #ff8c76;
-    }
-
-    td, th {
-        vertical-align: middle!important;
-    }
-
-    tr.line td, tr.line th {
-        padding: 4px!important;
-        line-height: 1!important;
-    }
-
-    th {
-        text-align: center!important;
-    }
-
-    .navbar-right {
-        width: 50%;
-    }
-
-    .navbar-form .form-group, .navbar-form .form-control {
-        width: 100%;
-    }
-</style>
+    <link rel="stylesheet" href="assets/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/report.css">
 </head>
 
 <body>
@@ -119,383 +17,390 @@
 <nav class="navbar navbar-default">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Code coverage report</a>
-        </div>
-
-        <div class="collapse navbar-collapse">
-            <form class="navbar-form navbar-right">
-                <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Search class">
-                </div>
-            </form>
+            <a class="navbar-brand" href="index.html"><img src="assets/logo.png" alt="atoum"/> Code coverage report</a>
         </div>
     </div>
 </nav>
 
 <div class="container-fluid">
     <div class="col-lg-12">
-            <script>
-    var graph = function(classname, method, padding) {
-        var g = new dagreD3.graphlib.Graph({ multigraph: true })
-                .setGraph({})
-                .setDefaultEdgeLabel(function() { return {}; });
+            <div class="row">
+        <h1>mageekguy\atoum\asserters\stream: branches coverage</h1>
 
-        padding = padding || 40;
+        
+<table class="table table-bordered">
+    <tr>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                99%
+                                    <small>of 159</small>
+                            </h1>
+            <strong>OPs</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                100%
+                                    <small>of 21</small>
+                            </h1>
+            <strong>Lines</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                100%
+                                    <small>of 14</small>
+                            </h1>
+            <strong>Branches</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                78%
+                                    <small>of 9</small>
+                            </h1>
+            <strong>Paths</strong>
+        </td>
+    </tr>
+</table>
 
-        g.addBranch = function(branch) {
-            var opLabel = 'OP #' + branch.op_start,
-                lineLabel = 'Line #' + branch.line_start;
-
-            if (branch.op_start != branch.op_end) {
-                opLabel = opLabel + ' - #' + branch.op_end;
-            }
-
-            if (branch.line_start != branch.line_end) {
-                lineLabel = lineLabel + ' - #' + branch.line_end;
-            }
-
-            g.setNode(
-                    branch.op_start,
-                    {
-                        label: opLabel + '\n \n' + lineLabel,
-                        class: branch.hit ? 'covered' : 'uncovered'
-                    }
-            );
-
-            return g;
-        };
-
-        var edges = 0;
-        g.addEdge = function(begin, end, hit, label) {
-            var options = {
-                class: hit ? 'covered' : 'uncovered',
-                lineInterpolate: 'basis',
-                label: label,
-                labelStyle: 'color: #' + (hit ? '8eff9b' : 'ff8c76'),
-                width: padding / 2
-            };
-
-            g.setEdge(begin, end, options, 'edge-' + edges++);
-
-            return g;
-        };
-
-        g.roundNodes = function() {
-            g.nodes().forEach(function(v) {
-                var node = g.node(v);
-
-                node.rx = node.ry = 5;
-            });
-
-            return g;
-        };
-
-        g.render = function() {
-            var render = new dagreD3.render(),
-                    svg = d3.select('#' + method + ' svg'),
-                    group = svg.append("g");
-
-            render(d3.select('#' + method + ' svg g'), g);
-
-            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
-            svg.attr("height", g.graph().height + (padding * 2));
-            svg.attr("width", g.graph().width + (padding * 2));
-        };
-
-        return g;
-    };
-    </script>
-
-    <div class="row">
-        <h1 class="pull-left">mageekguy\atoum\asserters\stream: branches coverage</h1>
-        <h2 class="pull-right"><span class="text-success">100%</span></h2
-    </div>
-
-    
-<table class="table table-bordered table-striped">
+<table class="table table-bordered table-striped table-hover sort">
     <thead>
     <tr>
-        <th>Method</th>
-        <th colspan="4">Coverage</th>
-    </tr>
-    <tr>
-        <th></th>
-        <th>Line</th>
-        <th>Branches</th>
-        <th>Path</th>
+        <th>Method <i class="fa"></i></th>
+        <th style="text-align: center">OPs <i class="fa"></i></th>
+        <th style="text-align: center">OPs % <i class="fa"></i></th>
+        <th style="text-align: center">Lines <i class="fa"></i></th>
+        <th style="text-align: center">Line % <i class="fa"></i></th>
+        <th style="text-align: center">Branches <i class="fa"></i></th>
+        <th style="text-align: center">Branches % <i class="fa"></i></th>
+        <th style="text-align: center">Paths <i class="fa"></i></th>
+        <th style="text-align: center">Path % <i class="fa"></i></th>
     </tr>
     </thead>
 
     <tbody>
             <tr>
             <td><a href="#setWith">mageekguy\atoum\asserters\stream::setWith()</a></td>
-            <td>    
+            <td style="text-align: center">21</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">3</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#getStreamController">mageekguy\atoum\asserters\stream::getStreamController()</a></td>
-            <td>    
+            <td style="text-align: center">6</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#isRead">mageekguy\atoum\asserters\stream::isRead()</a></td>
-            <td>    
+            <td style="text-align: center">51</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">6</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#isWrited">mageekguy\atoum\asserters\stream::isWrited()</a></td>
-            <td>    
+            <td style="text-align: center">11</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#isWritten">mageekguy\atoum\asserters\stream::isWritten()</a></td>
-            <td>    
+            <td style="text-align: center">51</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">6</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#streamIsSet">mageekguy\atoum\asserters\stream::streamIsSet()</a></td>
-            <td>    
+            <td style="text-align: center">19</td>
+            <td style="text-align: center">    
+    <span class="label label-success">95%</span>
+</td>
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">3</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
-        <tr>
-        <th>Total</th>
-        <td>    
-    <span class="label label-success">100%</span>
-</td>
-        <td>    
-    <span class="label label-success">100%</span>
-</td>
-        <td>    
-    <span class="label label-success">78%</span>
-</td>
-    </tr>
-    </tbody>
+        </tbody>
 </table>
 
-            <div class="panel panel-success" id="setWith">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::setWith()
-                    
+                    <div class="panel panel-success" id="setWith">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::setWith()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#setWith" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#setWith" class="btn btn-sm btn-success" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'setWith')
-                                    .addBranch({"op_start":0,"op_end":20,"line_start":15,"line_end":22,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                    .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="getStreamController">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::getStreamController()
-                    
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'setWith');
+
+                                    g.addNode({"op_start":0,"op_end":20,"line_start":15,"line_end":22,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                    
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="getStreamController">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::getStreamController()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#getStreamController" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#getStreamController" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#getStreamController" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#getStreamController" class="btn btn-sm btn-success" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'getStreamController')
-                                    .addBranch({"op_start":0,"op_end":5,"line_start":24,"line_end":27,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                    .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="isRead">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::isRead()
-                    
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'getStreamController');
+
+                                    g.addNode({"op_start":0,"op_end":5,"line_start":24,"line_end":27,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                    
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="isRead">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::isRead()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#isRead" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#isRead" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#isRead" class="btn btn-sm btn-warning"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#isRead" class="btn btn-sm btn-warning" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'isRead')
-                                    .addBranch({"op_start":0,"op_end":25,"line_start":29,"line_end":32,"hit":1,"out":[26,32],"out_hit":[16,16]})
-                                    .addBranch({"op_start":26,"op_end":31,"line_start":33,"line_end":34,"hit":1,"out":[47],"out_hit":[16]})
-                                    .addBranch({"op_start":32,"op_end":46,"line_start":37,"line_end":40,"hit":1,"out":[47],"out_hit":[0]})
-                                    .addBranch({"op_start":47,"op_end":50,"line_start":40,"line_end":41,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                                        .addEdge(0, 26, 16)
-                                                                                                .addEdge(0, 32, 16)
-                                                                                                                                    .addEdge(26, 47, 16)
-                                                                                                                                    .addEdge(32, 47, 0)
-                                                                                                                .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="isWrited">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::isWrited()
-                    
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'isRead');
+
+                                    g.addNode({"op_start":0,"op_end":25,"line_start":29,"line_end":32,"hit":1,"out":[26,32],"out_hit":[16,16]});
+                                    g.addNode({"op_start":26,"op_end":31,"line_start":33,"line_end":34,"hit":1,"out":[47],"out_hit":[16]});
+                                    g.addNode({"op_start":32,"op_end":46,"line_start":37,"line_end":40,"hit":1,"out":[47],"out_hit":[0]});
+                                    g.addNode({"op_start":47,"op_end":50,"line_start":40,"line_end":41,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                                                        g.addBranch(0, 26, 16);
+                                                                                                g.addBranch(0, 32, 16);
+                                                                                                                                    g.addBranch(26, 47, 16);
+                                                                                                                                    g.addBranch(32, 47, 0);
+                                                                                                
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="isWrited">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::isWrited()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#isWrited" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#isWrited" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#isWrited" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#isWrited" class="btn btn-sm btn-success" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'isWrited')
-                                    .addBranch({"op_start":0,"op_end":10,"line_start":43,"line_end":46,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                    .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="isWritten">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::isWritten()
-                    
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'isWrited');
+
+                                    g.addNode({"op_start":0,"op_end":10,"line_start":43,"line_end":46,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                    
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="isWritten">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::isWritten()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#isWritten" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#isWritten" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#isWritten" class="btn btn-sm btn-warning"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#isWritten" class="btn btn-sm btn-warning" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'isWritten')
-                                    .addBranch({"op_start":0,"op_end":25,"line_start":48,"line_end":51,"hit":1,"out":[26,32],"out_hit":[16,16]})
-                                    .addBranch({"op_start":26,"op_end":31,"line_start":52,"line_end":53,"hit":1,"out":[47],"out_hit":[16]})
-                                    .addBranch({"op_start":32,"op_end":46,"line_start":56,"line_end":59,"hit":1,"out":[47],"out_hit":[0]})
-                                    .addBranch({"op_start":47,"op_end":50,"line_start":59,"line_end":60,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                                        .addEdge(0, 26, 16)
-                                                                                                .addEdge(0, 32, 16)
-                                                                                                                                    .addEdge(26, 47, 16)
-                                                                                                                                    .addEdge(32, 47, 0)
-                                                                                                                .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="streamIsSet">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\stream::streamIsSet()
-                    
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'isWritten');
+
+                                    g.addNode({"op_start":0,"op_end":25,"line_start":48,"line_end":51,"hit":1,"out":[26,32],"out_hit":[16,16]});
+                                    g.addNode({"op_start":26,"op_end":31,"line_start":52,"line_end":53,"hit":1,"out":[47],"out_hit":[16]});
+                                    g.addNode({"op_start":32,"op_end":46,"line_start":56,"line_end":59,"hit":1,"out":[47],"out_hit":[0]});
+                                    g.addNode({"op_start":47,"op_end":50,"line_start":59,"line_end":60,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                                                        g.addBranch(0, 26, 16);
+                                                                                                g.addBranch(0, 32, 16);
+                                                                                                                                    g.addBranch(26, 47, 16);
+                                                                                                                                    g.addBranch(32, 47, 0);
+                                                                                                
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="streamIsSet">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\stream::streamIsSet()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-stream.html#streamIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-stream.html#streamIsSet" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
         
-                                <a href="./mageekguy-atoum-asserters-stream-path.html#streamIsSet" class="btn btn-sm btn-success"><i class="fa fa-road"></i></a>
+                                <a href="./mageekguy-atoum-asserters-stream-path.html#streamIsSet" class="btn btn-sm btn-success" title="Show paths coverage"><i class="fa fa-road"></i></a>
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\stream', 'streamIsSet')
-                                    .addBranch({"op_start":0,"op_end":5,"line_start":62,"line_end":65,"hit":1,"out":[6,15],"out_hit":[32,32]})
-                                    .addBranch({"op_start":6,"op_end":13,"line_start":66,"line_end":66,"hit":1,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":15,"op_end":18,"line_start":69,"line_end":70,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
-                                                                                        .addEdge(0, 6, 32)
-                                                                                                .addEdge(0, 15, 32)
-                                                                                                                                                                                                .render()
-            ;
-        </script>
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\stream', 'streamIsSet');
+
+                                    g.addNode({"op_start":0,"op_end":5,"line_start":62,"line_end":65,"hit":1,"out":[6,15],"out_hit":[32,32]});
+                                    g.addNode({"op_start":6,"op_end":13,"line_start":66,"line_end":66,"hit":1,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":15,"op_end":18,"line_start":69,"line_end":70,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                                                        g.addBranch(0, 6, 32);
+                                                                                                g.addBranch(0, 15, 32);
+                                                                                                                                                                                
+                g.render();
+            </script>
+            </div>
+    </div>
+
+    <footer class="row">
+        <div class="col-lg-12">
+            <small class="pull-right">Powered by <a href="http://atoum.org"><img src="assets/logo.png" alt="atoum"/></a></small>
         </div>
+    </footer>
 </div>
+
+<script>
+    $(function() {
+        $('table.sort').tablesorter();
+    })
+</script>
 
 </body>
 

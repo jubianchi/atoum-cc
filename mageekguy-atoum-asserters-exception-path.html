@@ -2,116 +2,14 @@
 
 <head>
     <script src="assets/d3.js" charset="utf-8"></script>
-<script src="assets/dagre-d3.js"></script>
+    <script src="assets/dagre-d3.js"></script>
+    <script src="assets/jquery.js"></script>
+    <script src="assets/jquery.tablesorter.js"></script>
+    <script src="assets/report.js"></script>
 
-<link rel="stylesheet" href="assets/bootstrap.min.css">
-<link rel="stylesheet" href="assets/font-awesome.min.css">
-
-<style>
-    td, th {
-        vertical-align: middle!important;
-    }
-
-    td.branch, td.path {
-        max-width: 2px!important;
-        width: 2px!important;
-        padding: 0!important;
-        border: none!important;
-        border-right: 1px solid #ddd!important;
-    }
-
-    tr.line td, tr.line th {
-        padding: 4px!important;
-        line-height: 1!important;
-    }
-
-    th {
-        text-align: center!important;
-    }
-
-    pre {
-        border: none;
-        background-color: transparent;
-        padding: 0;
-        margin: 0;
-    }
-
-    pre .label, .panel-heading .label {
-        margin: 0 10px;
-    }
-
-    pre .label {
-        font-weight: 300;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-        font-size: 13px;
-    }
-
-    .covered {
-        background-color: #8eff9b;
-    }
-
-    .uncovered {
-        background-color: #ff8c76;
-    }
-
-    .graph {
-        display: block;
-        overflow: auto;
-    }
-
-    div, text {
-        font-weight: 300;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-        font-size: 14px;
-    }
-
-    .node rect {
-        stroke: #999;
-        fill: #fff;
-        stroke-width: 1.5px;
-    }
-
-    .edgePath path {
-        stroke-width: 1.5px;
-    }
-
-    .covered path, .covered rect {
-        stroke: #8eff9b;
-    }
-
-    .uncovered path, .uncovered rect {
-        stroke: #ff8c76;
-    }
-
-    .covered path {
-        fill: #8eff9b;
-    }
-
-    .uncovered path {
-        fill: #ff8c76;
-    }
-
-    td, th {
-        vertical-align: middle!important;
-    }
-
-    tr.line td, tr.line th {
-        padding: 4px!important;
-        line-height: 1!important;
-    }
-
-    th {
-        text-align: center!important;
-    }
-
-    .navbar-right {
-        width: 50%;
-    }
-
-    .navbar-form .form-group, .navbar-form .form-control {
-        width: 100%;
-    }
-</style>
+    <link rel="stylesheet" href="assets/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/report.css">
 </head>
 
 <body>
@@ -119,1142 +17,1177 @@
 <nav class="navbar navbar-default">
     <div class="container-fluid">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Code coverage report</a>
-        </div>
-
-        <div class="collapse navbar-collapse">
-            <form class="navbar-form navbar-right">
-                <div class="form-group">
-                    <input type="text" class="form-control" placeholder="Search class">
-                </div>
-            </form>
+            <a class="navbar-brand" href="index.html"><img src="assets/logo.png" alt="atoum"/> Code coverage report</a>
         </div>
     </div>
 </nav>
 
 <div class="container-fluid">
     <div class="col-lg-12">
-            <script>
-    var graph = function(classname, method, padding) {
-        var g = new dagreD3.graphlib.Graph()
-                .setGraph({})
-                .setDefaultEdgeLabel(function() { return {}; });
+            <div class="row">
+        <h1>mageekguy\atoum\asserters\exception: paths coverage</h1>
 
-        padding = padding || 10;
+        
+<table class="table table-bordered">
+    <tr>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                95%
+                                    <small>of 455</small>
+                            </h1>
+            <strong>OPs</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                93%
+                                    <small>of 75</small>
+                            </h1>
+            <strong>Lines</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-success">
+                93%
+                                    <small>of 59</small>
+                            </h1>
+            <strong>Branches</strong>
+        </td>
+        <td style="text-align: center; width: 25%">
+            <h1 class="text-warning">
+                35%
+                                    <small>of 49</small>
+                            </h1>
+            <strong>Paths</strong>
+        </td>
+    </tr>
+</table>
 
-        g.addBranch = function(branch) {
-            var opLabel = 'OP #' + branch.op_start,
-                lineLabel = 'Line #' + branch.line_start;
-
-            if (branch.op_start != branch.op_end) {
-                opLabel = opLabel + ' - #' + branch.op_end;
-            }
-
-            if (branch.line_start != branch.line_end) {
-                lineLabel = lineLabel + ' - #' + branch.line_end;
-            }
-
-            g.setNode(
-                    branch.op_start,
-                    {
-                        label: opLabel + '\n \n' + lineLabel,
-                        class: branch.hit ? 'covered' : 'uncovered'
-                    }
-            );
-
-            return g;
-        };
-
-        var edges = [];
-        g.addEdge = function(begin, end, hit, label) {
-            var options = {
-                lineInterpolate: 'basis'
-            };
-
-            if (!edges[begin]) {
-                edges[begin] = [];
-            }
-
-            if (!edges[begin][end]) {
-                edges[begin][end] = {};
-                edges[begin][end][true] = 0;
-                edges[begin][end][false] = 0;
-            }
-
-            ++edges[begin][end][!!hit];
-
-            if (label) {
-                options.label = label;
-                options.width = padding / 2;
-            }
-
-            var paths = edges[begin][end][true] + edges[begin][end][false];
-            if (paths > 1) {
-                options.label = ' ' + edges[begin][end][true] + ' / ' + paths;
-            }
-
-            options.labelStyle = 'fill: #' + (edges[begin][end][true] == paths ? '8eff9b' : 'ff8c76');
-            options.class = edges[begin][end][true] == paths ? 'covered' : 'uncovered';
-
-            g.setEdge(begin, end, options);
-
-            return g;
-        };
-
-        g.roundNodes = function() {
-            g.nodes().forEach(function(v) {
-                var node = g.node(v);
-
-                node.rx = node.ry = 5;
-            });
-
-            return g;
-        };
-
-        g.render = function() {
-            var render = new dagreD3.render(),
-                    svg = d3.select('#' + method + ' svg'),
-                    group = svg.append("g");
-
-            render(d3.select('#' + method + ' svg g'), g);
-
-            group.attr("transform", 'translate(' + padding + ', ' + padding + ')');
-            svg
-                .attr("height", g.graph().height + (padding * 2))
-                .attr("width", g.graph().width + (padding * 2));
-        };
-
-        return g;
-    };
-    </script>
-
-    <div class="row">
-        <h1 class="pull-left">mageekguy\atoum\asserters\exception: paths coverage</h1>
-        <h2 class="pull-right"><span class="text-warning">35%</span></h2
-    </div>
-
-    
-<table class="table table-bordered table-striped">
+<table class="table table-bordered table-striped table-hover sort">
     <thead>
     <tr>
-        <th>Method</th>
-        <th colspan="4">Coverage</th>
-    </tr>
-    <tr>
-        <th></th>
-        <th>Line</th>
-        <th>Branches</th>
-        <th>Path</th>
+        <th>Method <i class="fa"></i></th>
+        <th style="text-align: center">OPs <i class="fa"></i></th>
+        <th style="text-align: center">OPs % <i class="fa"></i></th>
+        <th style="text-align: center">Lines <i class="fa"></i></th>
+        <th style="text-align: center">Line % <i class="fa"></i></th>
+        <th style="text-align: center">Branches <i class="fa"></i></th>
+        <th style="text-align: center">Branches % <i class="fa"></i></th>
+        <th style="text-align: center">Paths <i class="fa"></i></th>
+        <th style="text-align: center">Path % <i class="fa"></i></th>
     </tr>
     </thead>
 
     <tbody>
             <tr>
             <td><a href="#__get">mageekguy\atoum\asserters\exception::__get()</a></td>
-            <td>    
+            <td style="text-align: center">50</td>
+            <td style="text-align: center">    
+    <span class="label label-warning">64%</span>
+</td>
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">    
     <span class="label label-warning">67%</span>
 </td>
-            <td>    
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">    
     <span class="label label-warning">67%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
     <span class="label label-success">75%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#setWith">mageekguy\atoum\asserters\exception::setWith()</a></td>
-            <td>    
-    <span class="label label-success">95%</span>
-</td>
-            <td>    
+            <td style="text-align: center">72</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
-    <span class="label label-warning">22%</span>
+            <td style="text-align: center">19</td>
+            <td style="text-align: center">    
+    <span class="label label-success">95%</span>
+</td>
+            <td style="text-align: center">10</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">    
+    <span class="label label-danger">22%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#isInstanceOf">mageekguy\atoum\asserters\exception::isInstanceOf()</a></td>
-            <td>    
+            <td style="text-align: center">69</td>
+            <td style="text-align: center">    
+    <span class="label label-success">99%</span>
+</td>
+            <td style="text-align: center">6</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">7</td>
+            <td style="text-align: center">    
     <span class="label label-warning">43%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#hasDefaultCode">mageekguy\atoum\asserters\exception::hasDefaultCode()</a></td>
-            <td>    
+            <td style="text-align: center">43</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">7</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#hasCode">mageekguy\atoum\asserters\exception::hasCode()</a></td>
-            <td>    
+            <td style="text-align: center">45</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">7</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#hasMessage">mageekguy\atoum\asserters\exception::hasMessage()</a></td>
-            <td>    
+            <td style="text-align: center">46</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">8</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">4</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#hasNestedException">mageekguy\atoum\asserters\exception::hasNestedException()</a></td>
-            <td>    
+            <td style="text-align: center">63</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
-    <span class="label label-warning">11%</span>
+            <td style="text-align: center">13</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">18</td>
+            <td style="text-align: center">    
+    <span class="label label-danger">11%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#getLastValue">mageekguy\atoum\asserters\exception::getLastValue()</a></td>
-            <td>    
+            <td style="text-align: center">7</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#valueIsSet">mageekguy\atoum\asserters\exception::valueIsSet()</a></td>
-            <td>    
+            <td style="text-align: center">12</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#getMessageAsserter">mageekguy\atoum\asserters\exception::getMessageAsserter()</a></td>
-            <td>    
+            <td style="text-align: center">22</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
-            <td>    
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
+    <span class="label label-success">100%</span>
+</td>
+            <td style="text-align: center">1</td>
+            <td style="text-align: center">    
     <span class="label label-success">100%</span>
 </td>
         </tr>
             <tr>
             <td><a href="#check">mageekguy\atoum\asserters\exception::check()</a></td>
-            <td>    
+            <td style="text-align: center">26</td>
+            <td style="text-align: center">    
+    <span class="label label-success">81%</span>
+</td>
+            <td style="text-align: center">6</td>
+            <td style="text-align: center">    
     <span class="label label-success">83%</span>
 </td>
-            <td>    
+            <td style="text-align: center">3</td>
+            <td style="text-align: center">    
     <span class="label label-warning">67%</span>
 </td>
-            <td>    
+            <td style="text-align: center">2</td>
+            <td style="text-align: center">    
     <span class="label label-warning">50%</span>
 </td>
         </tr>
-        <tr>
-        <th>Total</th>
-        <td>    
-    <span class="label label-success">93%</span>
-</td>
-        <td>    
-    <span class="label label-success">93%</span>
-</td>
-        <td>    
-    <span class="label label-warning">35%</span>
-</td>
-    </tr>
-    </tbody>
+        </tbody>
 </table>
 
-            <div class="panel panel-success" id="__get">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::__get()
-                    
+                    <div class="panel panel-success" id="__get">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::__get()
+                        
     <span class="label label-success">75%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#__get" class="btn btn-sm btn-warning"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#__get" class="btn btn-sm btn-warning" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#__get" class="btn btn-sm btn-warning"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#__get" class="btn btn-sm btn-warning" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', '__get')
-                                    .addBranch({"op_start":0,"op_end":10,"line_start":14,"line_end":18,"hit":1,"out":[11,12],"out_hit":[524288,1048576]})
-                                    .addBranch({"op_start":11,"op_end":11,"line_start":19,"line_end":19,"hit":1,"out":[15],"out_hit":[524288]})
-                                    .addBranch({"op_start":12,"op_end":14,"line_start":19,"line_end":19,"hit":1,"out":[15,23],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":15,"op_end":21,"line_start":20,"line_end":20,"hit":1,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":23,"op_end":25,"line_start":22,"line_end":22,"hit":1,"out":[26,34],"out_hit":[524288,0]})
-                                    .addBranch({"op_start":26,"op_end":32,"line_start":23,"line_end":23,"hit":1,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":34,"op_end":35,"line_start":25,"line_end":25,"hit":0,"out":[46],"out_hit":[0]})
-                                    .addBranch({"op_start":36,"op_end":44,"line_start":26,"line_end":26,"hit":0,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":46,"op_end":49,"line_start":27,"line_end":28,"hit":0,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', '__get');
+
+                                    g.addNode({"op_start":0,"op_end":10,"line_start":14,"line_end":18,"hit":1,"out":[11,12],"out_hit":[524288,1048576]});
+                                    g.addNode({"op_start":11,"op_end":11,"line_start":19,"line_end":19,"hit":1,"out":[15],"out_hit":[524288]});
+                                    g.addNode({"op_start":12,"op_end":14,"line_start":19,"line_end":19,"hit":1,"out":[15,23],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":15,"op_end":21,"line_start":20,"line_end":20,"hit":1,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":23,"op_end":25,"line_start":22,"line_end":22,"hit":1,"out":[26,34],"out_hit":[524288,0]});
+                                    g.addNode({"op_start":26,"op_end":32,"line_start":23,"line_end":23,"hit":1,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":34,"op_end":35,"line_start":25,"line_end":25,"hit":0,"out":[46],"out_hit":[0]});
+                                    g.addNode({"op_start":36,"op_end":44,"line_start":26,"line_end":26,"hit":0,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":46,"op_end":49,"line_start":27,"line_end":28,"hit":0,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 11, 1)
+                                                    g.addPath(0, 11, 1);
                                                                     
-                                                    .addEdge(11, 15, 1)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 12, 1)
-                                                                    
-                                                    .addEdge(12, 15, 1)
+                                                    g.addPath(11, 15, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 12, 1)
+                                                    g.addPath(0, 12, 1);
                                                                     
-                                                    .addEdge(12, 23, 1)
-                                                                    
-                                                    .addEdge(23, 26, 1)
+                                                    g.addPath(12, 15, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 12, 0)
+                                                    g.addPath(0, 12, 1);
                                                                     
-                                                    .addEdge(12, 23, 0)
+                                                    g.addPath(12, 23, 1);
                                                                     
-                                                    .addEdge(23, 34, 0)
+                                                    g.addPath(23, 26, 1);
                                                                     
-                                                    .addEdge(34, 46, 0)
+                                                                                                        
+                                                    g.addPath(0, 12, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="setWith">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::setWith()
-                    
-    <span class="label label-warning">22%</span>
-
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
-        
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#setWith" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
-        
-            </div>
-
-            </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
-
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'setWith')
-                                    .addBranch({"op_start":0,"op_end":8,"line_start":30,"line_end":35,"hit":1,"out":[9,26],"out_hit":[4194304,3670016]})
-                                    .addBranch({"op_start":9,"op_end":23,"line_start":36,"line_end":42,"hit":1,"out":[25],"out_hit":[0]})
-                                    .addBranch({"op_start":24,"op_end":24,"line_start":42,"line_end":42,"hit":1,"out":[25,2147483645],"out_hit":[4194304,0]})
-                                    .addBranch({"op_start":25,"op_end":25,"line_start":43,"line_end":43,"hit":1,"out":[26],"out_hit":[4194304]})
-                                    .addBranch({"op_start":26,"op_end":38,"line_start":45,"line_end":48,"hit":1,"out":[39,68],"out_hit":[4194304,0]})
-                                    .addBranch({"op_start":39,"op_end":44,"line_start":49,"line_end":50,"hit":1,"out":[45,58],"out_hit":[524288,4194304]})
-                                    .addBranch({"op_start":45,"op_end":57,"line_start":51,"line_end":52,"hit":1,"out":[67],"out_hit":[0]})
-                                    .addBranch({"op_start":58,"op_end":66,"line_start":55,"line_end":59,"hit":1,"out":[67],"out_hit":[4194304]})
-                                    .addBranch({"op_start":67,"op_end":67,"line_start":59,"line_end":59,"hit":1,"out":[68],"out_hit":[4194304]})
-                                    .addBranch({"op_start":68,"op_end":71,"line_start":61,"line_end":62,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+                                                    g.addPath(12, 23, 0);
+                                                                    
+                                                    g.addPath(23, 34, 0);
+                                                                    
+                                                    g.addPath(34, 46, 0);
+                                                                    
                                                             
-                                                    .addEdge(0, 9, 0)
+                g.render();
+            </script>
+                    <div class="panel panel-danger" id="setWith">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::setWith()
+                        
+    <span class="label label-danger">22%</span>
+
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#setWith" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#setWith" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
+            </div>
+
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'setWith');
+
+                                    g.addNode({"op_start":0,"op_end":8,"line_start":30,"line_end":35,"hit":1,"out":[9,26],"out_hit":[4194304,3670016]});
+                                    g.addNode({"op_start":9,"op_end":23,"line_start":36,"line_end":42,"hit":1,"out":[25],"out_hit":[0]});
+                                    g.addNode({"op_start":24,"op_end":24,"line_start":42,"line_end":42,"hit":1,"out":[25,2147483645],"out_hit":[4194304,0]});
+                                    g.addNode({"op_start":25,"op_end":25,"line_start":43,"line_end":43,"hit":1,"out":[26],"out_hit":[4194304]});
+                                    g.addNode({"op_start":26,"op_end":38,"line_start":45,"line_end":48,"hit":1,"out":[39,68],"out_hit":[4194304,0]});
+                                    g.addNode({"op_start":39,"op_end":44,"line_start":49,"line_end":50,"hit":1,"out":[45,58],"out_hit":[524288,4194304]});
+                                    g.addNode({"op_start":45,"op_end":57,"line_start":51,"line_end":52,"hit":1,"out":[67],"out_hit":[0]});
+                                    g.addNode({"op_start":58,"op_end":66,"line_start":55,"line_end":59,"hit":1,"out":[67],"out_hit":[4194304]});
+                                    g.addNode({"op_start":67,"op_end":67,"line_start":59,"line_end":59,"hit":1,"out":[68],"out_hit":[4194304]});
+                                    g.addNode({"op_start":68,"op_end":71,"line_start":61,"line_end":62,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                            
+                                                    g.addPath(0, 9, 0);
                                                                     
-                                                    .addEdge(9, 25, 0)
+                                                    g.addPath(9, 25, 0);
                                                                     
-                                                    .addEdge(25, 26, 0)
+                                                    g.addPath(25, 26, 0);
                                                                     
-                                                    .addEdge(26, 39, 0)
+                                                    g.addPath(26, 39, 0);
                                                                     
-                                                    .addEdge(39, 45, 0)
+                                                    g.addPath(39, 45, 0);
                                                                     
-                                                    .addEdge(45, 67, 0)
+                                                    g.addPath(45, 67, 0);
                                                                     
-                                                    .addEdge(67, 68, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 9, 0)
-                                                                    
-                                                    .addEdge(9, 25, 0)
-                                                                    
-                                                    .addEdge(25, 26, 0)
-                                                                    
-                                                    .addEdge(26, 39, 0)
-                                                                    
-                                                    .addEdge(39, 58, 0)
-                                                                    
-                                                    .addEdge(58, 67, 0)
-                                                                    
-                                                    .addEdge(67, 68, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 9, 0)
-                                                                    
-                                                    .addEdge(9, 25, 0)
-                                                                    
-                                                    .addEdge(25, 26, 0)
-                                                                    
-                                                    .addEdge(26, 68, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 26, 0)
-                                                                    
-                                                    .addEdge(26, 39, 0)
-                                                                    
-                                                    .addEdge(39, 45, 0)
-                                                                    
-                                                    .addEdge(45, 67, 0)
-                                                                    
-                                                    .addEdge(67, 68, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 26, 1)
-                                                                    
-                                                    .addEdge(26, 39, 1)
-                                                                    
-                                                    .addEdge(39, 58, 1)
-                                                                    
-                                                    .addEdge(58, 67, 1)
-                                                                    
-                                                    .addEdge(67, 68, 1)
+                                                    g.addPath(67, 68, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 26, 0)
+                                                    g.addPath(0, 9, 0);
                                                                     
-                                                    .addEdge(26, 68, 0)
+                                                    g.addPath(9, 25, 0);
                                                                     
-                                                                                                        
-                                                    .addEdge(24, 25, 0)
+                                                    g.addPath(25, 26, 0);
                                                                     
-                                                    .addEdge(25, 26, 0)
+                                                    g.addPath(26, 39, 0);
                                                                     
-                                                    .addEdge(26, 39, 0)
+                                                    g.addPath(39, 58, 0);
                                                                     
-                                                    .addEdge(39, 45, 0)
+                                                    g.addPath(58, 67, 0);
                                                                     
-                                                    .addEdge(45, 67, 0)
-                                                                    
-                                                    .addEdge(67, 68, 0)
+                                                    g.addPath(67, 68, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(24, 25, 1)
+                                                    g.addPath(0, 9, 0);
                                                                     
-                                                    .addEdge(25, 26, 1)
+                                                    g.addPath(9, 25, 0);
                                                                     
-                                                    .addEdge(26, 39, 1)
+                                                    g.addPath(25, 26, 0);
                                                                     
-                                                    .addEdge(39, 58, 1)
-                                                                    
-                                                    .addEdge(58, 67, 1)
-                                                                    
-                                                    .addEdge(67, 68, 1)
+                                                    g.addPath(26, 68, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(24, 25, 0)
+                                                    g.addPath(0, 26, 0);
                                                                     
-                                                    .addEdge(25, 26, 0)
+                                                    g.addPath(26, 39, 0);
                                                                     
-                                                    .addEdge(26, 68, 0)
+                                                    g.addPath(39, 45, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="isInstanceOf">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::isInstanceOf()
-                    
+                                                    g.addPath(45, 67, 0);
+                                                                    
+                                                    g.addPath(67, 68, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 26, 1);
+                                                                    
+                                                    g.addPath(26, 39, 1);
+                                                                    
+                                                    g.addPath(39, 58, 1);
+                                                                    
+                                                    g.addPath(58, 67, 1);
+                                                                    
+                                                    g.addPath(67, 68, 1);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 26, 0);
+                                                                    
+                                                    g.addPath(26, 68, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(24, 25, 0);
+                                                                    
+                                                    g.addPath(25, 26, 0);
+                                                                    
+                                                    g.addPath(26, 39, 0);
+                                                                    
+                                                    g.addPath(39, 45, 0);
+                                                                    
+                                                    g.addPath(45, 67, 0);
+                                                                    
+                                                    g.addPath(67, 68, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(24, 25, 1);
+                                                                    
+                                                    g.addPath(25, 26, 1);
+                                                                    
+                                                    g.addPath(26, 39, 1);
+                                                                    
+                                                    g.addPath(39, 58, 1);
+                                                                    
+                                                    g.addPath(58, 67, 1);
+                                                                    
+                                                    g.addPath(67, 68, 1);
+                                                                    
+                                                                                                        
+                                                    g.addPath(24, 25, 0);
+                                                                    
+                                                    g.addPath(25, 26, 0);
+                                                                    
+                                                    g.addPath(26, 68, 0);
+                                                                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-warning" id="isInstanceOf">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::isInstanceOf()
+                        
     <span class="label label-warning">43%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#isInstanceOf" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#isInstanceOf" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#isInstanceOf" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#isInstanceOf" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'isInstanceOf')
-                                    .addBranch({"op_start":0,"op_end":11,"line_start":64,"line_end":70,"hit":1,"out":[58],"out_hit":[0]})
-                                    .addBranch({"op_start":12,"op_end":12,"line_start":70,"line_end":70,"hit":1,"out":[13,2147483645],"out_hit":[3670016,0]})
-                                    .addBranch({"op_start":13,"op_end":22,"line_start":72,"line_end":72,"hit":1,"out":[23,46],"out_hit":[3670016,524288]})
-                                    .addBranch({"op_start":23,"op_end":35,"line_start":72,"line_end":72,"hit":1,"out":[36,45],"out_hit":[3670016,524288]})
-                                    .addBranch({"op_start":36,"op_end":44,"line_start":72,"line_end":72,"hit":1,"out":[45],"out_hit":[3670016]})
-                                    .addBranch({"op_start":45,"op_end":45,"line_start":72,"line_end":73,"hit":1,"out":[46],"out_hit":[3670016]})
-                                    .addBranch({"op_start":46,"op_end":46,"line_start":73,"line_end":73,"hit":1,"out":[47,58],"out_hit":[524288,3670016]})
-                                    .addBranch({"op_start":47,"op_end":56,"line_start":74,"line_end":74,"hit":1,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":58,"op_end":68,"line_start":78,"line_end":79,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'isInstanceOf');
+
+                                    g.addNode({"op_start":0,"op_end":11,"line_start":64,"line_end":70,"hit":1,"out":[58],"out_hit":[0]});
+                                    g.addNode({"op_start":12,"op_end":12,"line_start":70,"line_end":70,"hit":1,"out":[13,2147483645],"out_hit":[3670016,0]});
+                                    g.addNode({"op_start":13,"op_end":22,"line_start":72,"line_end":72,"hit":1,"out":[23,46],"out_hit":[3670016,524288]});
+                                    g.addNode({"op_start":23,"op_end":35,"line_start":72,"line_end":72,"hit":1,"out":[36,45],"out_hit":[3670016,524288]});
+                                    g.addNode({"op_start":36,"op_end":44,"line_start":72,"line_end":72,"hit":1,"out":[45],"out_hit":[3670016]});
+                                    g.addNode({"op_start":45,"op_end":45,"line_start":72,"line_end":73,"hit":1,"out":[46],"out_hit":[3670016]});
+                                    g.addNode({"op_start":46,"op_end":46,"line_start":73,"line_end":73,"hit":1,"out":[47,58],"out_hit":[524288,3670016]});
+                                    g.addNode({"op_start":47,"op_end":56,"line_start":74,"line_end":74,"hit":1,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":58,"op_end":68,"line_start":78,"line_end":79,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 58, 0)
+                                                    g.addPath(0, 58, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(12, 13, 0)
+                                                    g.addPath(12, 13, 0);
                                                                     
-                                                    .addEdge(13, 23, 0)
+                                                    g.addPath(13, 23, 0);
                                                                     
-                                                    .addEdge(23, 36, 0)
+                                                    g.addPath(23, 36, 0);
                                                                     
-                                                    .addEdge(36, 45, 0)
+                                                    g.addPath(36, 45, 0);
                                                                     
-                                                    .addEdge(45, 46, 0)
+                                                    g.addPath(45, 46, 0);
                                                                     
-                                                    .addEdge(46, 47, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(12, 13, 1)
-                                                                    
-                                                    .addEdge(13, 23, 1)
-                                                                    
-                                                    .addEdge(23, 36, 1)
-                                                                    
-                                                    .addEdge(36, 45, 1)
-                                                                    
-                                                    .addEdge(45, 46, 1)
-                                                                    
-                                                    .addEdge(46, 58, 1)
+                                                    g.addPath(46, 47, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(12, 13, 0)
+                                                    g.addPath(12, 13, 1);
                                                                     
-                                                    .addEdge(13, 23, 0)
+                                                    g.addPath(13, 23, 1);
                                                                     
-                                                    .addEdge(23, 45, 0)
+                                                    g.addPath(23, 36, 1);
                                                                     
-                                                    .addEdge(45, 46, 0)
+                                                    g.addPath(36, 45, 1);
                                                                     
-                                                    .addEdge(46, 47, 0)
+                                                    g.addPath(45, 46, 1);
                                                                     
-                                                                                                        
-                                                    .addEdge(12, 13, 1)
-                                                                    
-                                                    .addEdge(13, 23, 1)
-                                                                    
-                                                    .addEdge(23, 45, 1)
-                                                                    
-                                                    .addEdge(45, 46, 1)
-                                                                    
-                                                    .addEdge(46, 58, 1)
+                                                    g.addPath(46, 58, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(12, 13, 1)
+                                                    g.addPath(12, 13, 0);
                                                                     
-                                                    .addEdge(13, 46, 1)
+                                                    g.addPath(13, 23, 0);
                                                                     
-                                                    .addEdge(46, 47, 1)
+                                                    g.addPath(23, 45, 0);
+                                                                    
+                                                    g.addPath(45, 46, 0);
+                                                                    
+                                                    g.addPath(46, 47, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(12, 13, 0)
+                                                    g.addPath(12, 13, 1);
                                                                     
-                                                    .addEdge(13, 46, 0)
+                                                    g.addPath(13, 23, 1);
                                                                     
-                                                    .addEdge(46, 58, 0)
+                                                    g.addPath(23, 45, 1);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="hasDefaultCode">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::hasDefaultCode()
-                    
+                                                    g.addPath(45, 46, 1);
+                                                                    
+                                                    g.addPath(46, 58, 1);
+                                                                    
+                                                                                                        
+                                                    g.addPath(12, 13, 1);
+                                                                    
+                                                    g.addPath(13, 46, 1);
+                                                                    
+                                                    g.addPath(46, 47, 1);
+                                                                    
+                                                                                                        
+                                                    g.addPath(12, 13, 0);
+                                                                    
+                                                    g.addPath(13, 46, 0);
+                                                                    
+                                                    g.addPath(46, 58, 0);
+                                                                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-warning" id="hasDefaultCode">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::hasDefaultCode()
+                        
     <span class="label label-warning">50%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#hasDefaultCode" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#hasDefaultCode" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasDefaultCode" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasDefaultCode" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'hasDefaultCode')
-                                    .addBranch({"op_start":0,"op_end":13,"line_start":81,"line_end":84,"hit":1,"out":[14,20],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":14,"op_end":19,"line_start":85,"line_end":86,"hit":1,"out":[39],"out_hit":[524288]})
-                                    .addBranch({"op_start":20,"op_end":38,"line_start":89,"line_end":92,"hit":1,"out":[39],"out_hit":[0]})
-                                    .addBranch({"op_start":39,"op_end":42,"line_start":92,"line_end":93,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'hasDefaultCode');
+
+                                    g.addNode({"op_start":0,"op_end":13,"line_start":81,"line_end":84,"hit":1,"out":[14,20],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":14,"op_end":19,"line_start":85,"line_end":86,"hit":1,"out":[39],"out_hit":[524288]});
+                                    g.addNode({"op_start":20,"op_end":38,"line_start":89,"line_end":92,"hit":1,"out":[39],"out_hit":[0]});
+                                    g.addNode({"op_start":39,"op_end":42,"line_start":92,"line_end":93,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 14, 1)
+                                                    g.addPath(0, 14, 1);
                                                                     
-                                                    .addEdge(14, 39, 1)
+                                                    g.addPath(14, 39, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 20, 0)
+                                                    g.addPath(0, 20, 0);
                                                                     
-                                                    .addEdge(20, 39, 0)
+                                                    g.addPath(20, 39, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="hasCode">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::hasCode()
-                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-warning" id="hasCode">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::hasCode()
+                        
     <span class="label label-warning">50%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#hasCode" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#hasCode" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasCode" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasCode" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'hasCode')
-                                    .addBranch({"op_start":0,"op_end":14,"line_start":95,"line_end":98,"hit":1,"out":[15,21],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":15,"op_end":20,"line_start":99,"line_end":100,"hit":1,"out":[41],"out_hit":[524288]})
-                                    .addBranch({"op_start":21,"op_end":40,"line_start":103,"line_end":106,"hit":1,"out":[41],"out_hit":[0]})
-                                    .addBranch({"op_start":41,"op_end":44,"line_start":106,"line_end":107,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'hasCode');
+
+                                    g.addNode({"op_start":0,"op_end":14,"line_start":95,"line_end":98,"hit":1,"out":[15,21],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":15,"op_end":20,"line_start":99,"line_end":100,"hit":1,"out":[41],"out_hit":[524288]});
+                                    g.addNode({"op_start":21,"op_end":40,"line_start":103,"line_end":106,"hit":1,"out":[41],"out_hit":[0]});
+                                    g.addNode({"op_start":41,"op_end":44,"line_start":106,"line_end":107,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 15, 1)
+                                                    g.addPath(0, 15, 1);
                                                                     
-                                                    .addEdge(15, 41, 1)
+                                                    g.addPath(15, 41, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 21, 0);
                                                                     
-                                                    .addEdge(21, 41, 0)
+                                                    g.addPath(21, 41, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="hasMessage">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::hasMessage()
-                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-warning" id="hasMessage">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::hasMessage()
+                        
     <span class="label label-warning">50%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#hasMessage" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#hasMessage" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasMessage" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasMessage" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'hasMessage')
-                                    .addBranch({"op_start":0,"op_end":15,"line_start":109,"line_end":112,"hit":1,"out":[16,22],"out_hit":[3670016,524288]})
-                                    .addBranch({"op_start":16,"op_end":21,"line_start":113,"line_end":114,"hit":1,"out":[42],"out_hit":[3670016]})
-                                    .addBranch({"op_start":22,"op_end":41,"line_start":117,"line_end":120,"hit":1,"out":[42],"out_hit":[0]})
-                                    .addBranch({"op_start":42,"op_end":45,"line_start":120,"line_end":121,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'hasMessage');
+
+                                    g.addNode({"op_start":0,"op_end":15,"line_start":109,"line_end":112,"hit":1,"out":[16,22],"out_hit":[3670016,524288]});
+                                    g.addNode({"op_start":16,"op_end":21,"line_start":113,"line_end":114,"hit":1,"out":[42],"out_hit":[3670016]});
+                                    g.addNode({"op_start":22,"op_end":41,"line_start":117,"line_end":120,"hit":1,"out":[42],"out_hit":[0]});
+                                    g.addNode({"op_start":42,"op_end":45,"line_start":120,"line_end":121,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 16, 1)
+                                                    g.addPath(0, 16, 1);
                                                                     
-                                                    .addEdge(16, 42, 1)
+                                                    g.addPath(16, 42, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 22, 0)
+                                                    g.addPath(0, 22, 0);
                                                                     
-                                                    .addEdge(22, 42, 0)
+                                                    g.addPath(22, 42, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="hasNestedException">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::hasNestedException()
-                    
-    <span class="label label-warning">11%</span>
-
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#hasNestedException" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
-        
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasNestedException" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
-        
-            </div>
-
-            </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
-
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'hasNestedException')
-                                    .addBranch({"op_start":0,"op_end":17,"line_start":123,"line_end":127,"hit":1,"out":[18,21],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":18,"op_end":20,"line_start":127,"line_end":127,"hit":1,"out":[21],"out_hit":[524288]})
-                                    .addBranch({"op_start":21,"op_end":21,"line_start":127,"line_end":127,"hit":1,"out":[22,28],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":22,"op_end":24,"line_start":127,"line_end":127,"hit":1,"out":[25,27],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":25,"op_end":26,"line_start":127,"line_end":127,"hit":1,"out":[27],"out_hit":[524288]})
-                                    .addBranch({"op_start":27,"op_end":27,"line_start":127,"line_end":128,"hit":1,"out":[28],"out_hit":[524288]})
-                                    .addBranch({"op_start":28,"op_end":28,"line_start":128,"line_end":128,"hit":1,"out":[29,35],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":29,"op_end":34,"line_start":129,"line_end":130,"hit":1,"out":[59],"out_hit":[524288]})
-                                    .addBranch({"op_start":35,"op_end":41,"line_start":133,"line_end":133,"hit":1,"out":[42,49],"out_hit":[524288,524288]})
-                                    .addBranch({"op_start":42,"op_end":48,"line_start":133,"line_end":133,"hit":1,"out":[55],"out_hit":[524288]})
-                                    .addBranch({"op_start":49,"op_end":54,"line_start":133,"line_end":133,"hit":1,"out":[55],"out_hit":[524288]})
-                                    .addBranch({"op_start":55,"op_end":58,"line_start":133,"line_end":136,"hit":1,"out":[59],"out_hit":[0]})
-                                    .addBranch({"op_start":59,"op_end":62,"line_start":136,"line_end":137,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
                                                             
-                                                    .addEdge(0, 18, 0)
+                g.render();
+            </script>
+                    <div class="panel panel-danger" id="hasNestedException">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::hasNestedException()
+                        
+    <span class="label label-danger">11%</span>
+
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#hasNestedException" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
+        
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#hasNestedException" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
+        
+            </div>
+
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
+            </div>
+
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'hasNestedException');
+
+                                    g.addNode({"op_start":0,"op_end":17,"line_start":123,"line_end":127,"hit":1,"out":[18,21],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":18,"op_end":20,"line_start":127,"line_end":127,"hit":1,"out":[21],"out_hit":[524288]});
+                                    g.addNode({"op_start":21,"op_end":21,"line_start":127,"line_end":127,"hit":1,"out":[22,28],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":22,"op_end":24,"line_start":127,"line_end":127,"hit":1,"out":[25,27],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":25,"op_end":26,"line_start":127,"line_end":127,"hit":1,"out":[27],"out_hit":[524288]});
+                                    g.addNode({"op_start":27,"op_end":27,"line_start":127,"line_end":128,"hit":1,"out":[28],"out_hit":[524288]});
+                                    g.addNode({"op_start":28,"op_end":28,"line_start":128,"line_end":128,"hit":1,"out":[29,35],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":29,"op_end":34,"line_start":129,"line_end":130,"hit":1,"out":[59],"out_hit":[524288]});
+                                    g.addNode({"op_start":35,"op_end":41,"line_start":133,"line_end":133,"hit":1,"out":[42,49],"out_hit":[524288,524288]});
+                                    g.addNode({"op_start":42,"op_end":48,"line_start":133,"line_end":133,"hit":1,"out":[55],"out_hit":[524288]});
+                                    g.addNode({"op_start":49,"op_end":54,"line_start":133,"line_end":133,"hit":1,"out":[55],"out_hit":[524288]});
+                                    g.addNode({"op_start":55,"op_end":58,"line_start":133,"line_end":136,"hit":1,"out":[59],"out_hit":[0]});
+                                    g.addNode({"op_start":59,"op_end":62,"line_start":136,"line_end":137,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
+                                                            
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(18, 21, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(22, 25, 0)
+                                                    g.addPath(22, 25, 0);
                                                                     
-                                                    .addEdge(25, 27, 0)
+                                                    g.addPath(25, 27, 0);
                                                                     
-                                                    .addEdge(27, 28, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(28, 29, 0)
+                                                    g.addPath(28, 29, 0);
                                                                     
-                                                    .addEdge(29, 59, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 18, 0)
-                                                                    
-                                                    .addEdge(18, 21, 0)
-                                                                    
-                                                    .addEdge(21, 22, 0)
-                                                                    
-                                                    .addEdge(22, 25, 0)
-                                                                    
-                                                    .addEdge(25, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 42, 0)
-                                                                    
-                                                    .addEdge(42, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 18, 0)
-                                                                    
-                                                    .addEdge(18, 21, 0)
-                                                                    
-                                                    .addEdge(21, 22, 0)
-                                                                    
-                                                    .addEdge(22, 25, 0)
-                                                                    
-                                                    .addEdge(25, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 49, 0)
-                                                                    
-                                                    .addEdge(49, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 18, 0)
-                                                                    
-                                                    .addEdge(18, 21, 0)
-                                                                    
-                                                    .addEdge(21, 22, 0)
-                                                                    
-                                                    .addEdge(22, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 29, 0)
-                                                                    
-                                                    .addEdge(29, 59, 0)
+                                                    g.addPath(29, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 18, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(18, 21, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(22, 27, 0)
+                                                    g.addPath(22, 25, 0);
                                                                     
-                                                    .addEdge(27, 28, 0)
+                                                    g.addPath(25, 27, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(35, 42, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                    .addEdge(42, 55, 0)
+                                                    g.addPath(35, 42, 0);
                                                                     
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(42, 55, 0);
                                                                     
-                                                                                                        
-                                                    .addEdge(0, 18, 0)
-                                                                    
-                                                    .addEdge(18, 21, 0)
-                                                                    
-                                                    .addEdge(21, 22, 0)
-                                                                    
-                                                    .addEdge(22, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 49, 0)
-                                                                    
-                                                    .addEdge(49, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(55, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 18, 1)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(18, 21, 1)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(21, 28, 1)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(28, 29, 1)
+                                                    g.addPath(22, 25, 0);
                                                                     
-                                                    .addEdge(29, 59, 1)
+                                                    g.addPath(25, 27, 0);
                                                                     
-                                                                                                        
-                                                    .addEdge(0, 18, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(18, 21, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                    .addEdge(21, 28, 0)
+                                                    g.addPath(35, 49, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
+                                                    g.addPath(49, 55, 0);
                                                                     
-                                                    .addEdge(35, 42, 0)
-                                                                    
-                                                    .addEdge(42, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(55, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 18, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(18, 21, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(21, 28, 0)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
+                                                    g.addPath(22, 27, 0);
                                                                     
-                                                    .addEdge(35, 49, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(49, 55, 0)
+                                                    g.addPath(28, 29, 0);
                                                                     
-                                                    .addEdge(55, 59, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 21, 1)
-                                                                    
-                                                    .addEdge(21, 22, 1)
-                                                                    
-                                                    .addEdge(22, 25, 1)
-                                                                    
-                                                    .addEdge(25, 27, 1)
-                                                                    
-                                                    .addEdge(27, 28, 1)
-                                                                    
-                                                    .addEdge(28, 29, 1)
-                                                                    
-                                                    .addEdge(29, 59, 1)
+                                                    g.addPath(29, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(22, 25, 0)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(25, 27, 0)
+                                                    g.addPath(22, 27, 0);
                                                                     
-                                                    .addEdge(27, 28, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                    .addEdge(35, 42, 0)
+                                                    g.addPath(35, 42, 0);
                                                                     
-                                                    .addEdge(42, 55, 0)
+                                                    g.addPath(42, 55, 0);
                                                                     
-                                                    .addEdge(55, 59, 0)
-                                                                    
-                                                                                                        
-                                                    .addEdge(0, 21, 0)
-                                                                    
-                                                    .addEdge(21, 22, 0)
-                                                                    
-                                                    .addEdge(22, 25, 0)
-                                                                    
-                                                    .addEdge(25, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 49, 0)
-                                                                    
-                                                    .addEdge(49, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(55, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(22, 27, 0)
+                                                    g.addPath(21, 22, 0);
                                                                     
-                                                    .addEdge(27, 28, 0)
+                                                    g.addPath(22, 27, 0);
                                                                     
-                                                    .addEdge(28, 29, 0)
+                                                    g.addPath(27, 28, 0);
                                                                     
-                                                    .addEdge(29, 59, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                                                                        
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(35, 49, 0);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(49, 55, 0);
                                                                     
-                                                    .addEdge(22, 27, 0)
-                                                                    
-                                                    .addEdge(27, 28, 0)
-                                                                    
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 42, 0)
-                                                                    
-                                                    .addEdge(42, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(55, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 18, 1);
                                                                     
-                                                    .addEdge(21, 22, 0)
+                                                    g.addPath(18, 21, 1);
                                                                     
-                                                    .addEdge(22, 27, 0)
+                                                    g.addPath(21, 28, 1);
                                                                     
-                                                    .addEdge(27, 28, 0)
+                                                    g.addPath(28, 29, 1);
                                                                     
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 49, 0)
-                                                                    
-                                                    .addEdge(49, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(29, 59, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(21, 28, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(28, 29, 0)
+                                                    g.addPath(21, 28, 0);
                                                                     
-                                                    .addEdge(29, 59, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                                                                        
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(35, 42, 0);
                                                                     
-                                                    .addEdge(21, 28, 0)
+                                                    g.addPath(42, 55, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
-                                                                    
-                                                    .addEdge(35, 42, 0)
-                                                                    
-                                                    .addEdge(42, 55, 0)
-                                                                    
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(55, 59, 0);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 21, 0)
+                                                    g.addPath(0, 18, 0);
                                                                     
-                                                    .addEdge(21, 28, 0)
+                                                    g.addPath(18, 21, 0);
                                                                     
-                                                    .addEdge(28, 35, 0)
+                                                    g.addPath(21, 28, 0);
                                                                     
-                                                    .addEdge(35, 49, 0)
+                                                    g.addPath(28, 35, 0);
                                                                     
-                                                    .addEdge(49, 55, 0)
+                                                    g.addPath(35, 49, 0);
                                                                     
-                                                    .addEdge(55, 59, 0)
+                                                    g.addPath(49, 55, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="getLastValue">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::getLastValue()
-                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 1);
+                                                                    
+                                                    g.addPath(21, 22, 1);
+                                                                    
+                                                    g.addPath(22, 25, 1);
+                                                                    
+                                                    g.addPath(25, 27, 1);
+                                                                    
+                                                    g.addPath(27, 28, 1);
+                                                                    
+                                                    g.addPath(28, 29, 1);
+                                                                    
+                                                    g.addPath(29, 59, 1);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 22, 0);
+                                                                    
+                                                    g.addPath(22, 25, 0);
+                                                                    
+                                                    g.addPath(25, 27, 0);
+                                                                    
+                                                    g.addPath(27, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 42, 0);
+                                                                    
+                                                    g.addPath(42, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 22, 0);
+                                                                    
+                                                    g.addPath(22, 25, 0);
+                                                                    
+                                                    g.addPath(25, 27, 0);
+                                                                    
+                                                    g.addPath(27, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 49, 0);
+                                                                    
+                                                    g.addPath(49, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 22, 0);
+                                                                    
+                                                    g.addPath(22, 27, 0);
+                                                                    
+                                                    g.addPath(27, 28, 0);
+                                                                    
+                                                    g.addPath(28, 29, 0);
+                                                                    
+                                                    g.addPath(29, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 22, 0);
+                                                                    
+                                                    g.addPath(22, 27, 0);
+                                                                    
+                                                    g.addPath(27, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 42, 0);
+                                                                    
+                                                    g.addPath(42, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 22, 0);
+                                                                    
+                                                    g.addPath(22, 27, 0);
+                                                                    
+                                                    g.addPath(27, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 49, 0);
+                                                                    
+                                                    g.addPath(49, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 28, 0);
+                                                                    
+                                                    g.addPath(28, 29, 0);
+                                                                    
+                                                    g.addPath(29, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 42, 0);
+                                                                    
+                                                    g.addPath(42, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                                                                        
+                                                    g.addPath(0, 21, 0);
+                                                                    
+                                                    g.addPath(21, 28, 0);
+                                                                    
+                                                    g.addPath(28, 35, 0);
+                                                                    
+                                                    g.addPath(35, 49, 0);
+                                                                    
+                                                    g.addPath(49, 55, 0);
+                                                                    
+                                                    g.addPath(55, 59, 0);
+                                                                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="getLastValue">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::getLastValue()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#getLastValue" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#getLastValue" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#getLastValue" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#getLastValue" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'getLastValue')
-                                    .addBranch({"op_start":0,"op_end":6,"line_start":139,"line_end":142,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'getLastValue');
+
+                                    g.addNode({"op_start":0,"op_end":6,"line_start":139,"line_end":142,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="valueIsSet">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::valueIsSet()
-                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="valueIsSet">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::valueIsSet()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#valueIsSet" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#valueIsSet" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#valueIsSet" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#valueIsSet" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'valueIsSet')
-                                    .addBranch({"op_start":0,"op_end":11,"line_start":144,"line_end":147,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'valueIsSet');
+
+                                    g.addNode({"op_start":0,"op_end":11,"line_start":144,"line_end":147,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-success" id="getMessageAsserter">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::getMessageAsserter()
-                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-success" id="getMessageAsserter">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::getMessageAsserter()
+                        
     <span class="label label-success">100%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#getMessageAsserter" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#getMessageAsserter" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#getMessageAsserter" class="btn btn-sm btn-success"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#getMessageAsserter" class="btn btn-sm btn-success" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'getMessageAsserter')
-                                    .addBranch({"op_start":0,"op_end":21,"line_start":149,"line_end":152,"hit":1,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'getMessageAsserter');
+
+                                    g.addNode({"op_start":0,"op_end":21,"line_start":149,"line_end":152,"hit":1,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                                            .render()
-            ;
-        </script>
-            <div class="panel panel-warning" id="check">
-            <div class="panel-heading">
-                mageekguy\atoum\asserters\exception::check()
-                    
+                                                            
+                g.render();
+            </script>
+                    <div class="panel panel-warning" id="check">
+                <div class="panel-heading">
+                    mageekguy\atoum\asserters\exception::check()
+                        
     <span class="label label-warning">50%</span>
 
-                    <div class="btn-group">
-                                <a href="./mageekguy-atoum-asserters-exception.html#check" class="btn btn-sm btn-success"><i class="fa fa-align-justify"></i></a>
+                        <div class="btn-group">
+                                <a href="./mageekguy-atoum-asserters-exception.html#check" class="btn btn-sm btn-success" title="Show lines coverage"><i class="fa fa-align-justify"></i></a>
         
-                                <a href="./mageekguy-atoum-asserters-exception-branch.html#check" class="btn btn-sm btn-warning"><i class="fa fa-code-fork"></i></a>
+                                <a href="./mageekguy-atoum-asserters-exception-branch.html#check" class="btn btn-sm btn-warning" title="Show branches coverage"><i class="fa fa-code-fork"></i></a>
         
             </div>
 
+                </div>
+                <div class="panel-body">
+                    <div class="graph"><svg></svg></div>
+                </div>
             </div>
-            <div class="panel-body">
-                <div class="graph"><svg></svg></div>
-            </div>
-        </div>
 
-        <script>
-            graph('mageekguy\\atoum\\asserters\\exception', 'check')
-                                    .addBranch({"op_start":0,"op_end":8,"line_start":154,"line_end":157,"hit":1,"out":[9,22],"out_hit":[3670016,0]})
-                                    .addBranch({"op_start":9,"op_end":20,"line_start":158,"line_end":158,"hit":1,"out":[2147483645],"out_hit":[0]})
-                                    .addBranch({"op_start":22,"op_end":25,"line_start":161,"line_end":162,"hit":0,"out":[],"out_hit":[]})
-                                .roundNodes()
+            <script>
+                var g = graph('mageekguy\\atoum\\asserters\\exception', 'check');
+
+                                    g.addNode({"op_start":0,"op_end":8,"line_start":154,"line_end":157,"hit":1,"out":[9,22],"out_hit":[3670016,0]});
+                                    g.addNode({"op_start":9,"op_end":20,"line_start":158,"line_end":158,"hit":1,"out":[2147483645],"out_hit":[0]});
+                                    g.addNode({"op_start":22,"op_end":25,"line_start":161,"line_end":162,"hit":0,"out":[],"out_hit":[]});
+                
+                g.roundNodes();
+
                                                             
-                                                    .addEdge(0, 9, 1)
+                                                    g.addPath(0, 9, 1);
                                                                     
                                                                                                         
-                                                    .addEdge(0, 22, 0)
+                                                    g.addPath(0, 22, 0);
                                                                     
-                                                                            .render()
-            ;
-        </script>
+                                                            
+                g.render();
+            </script>
+            </div>
+    </div>
+
+    <footer class="row">
+        <div class="col-lg-12">
+            <small class="pull-right">Powered by <a href="http://atoum.org"><img src="assets/logo.png" alt="atoum"/></a></small>
         </div>
+    </footer>
 </div>
+
+<script>
+    $(function() {
+        $('table.sort').tablesorter();
+    })
+</script>
 
 </body>
 
